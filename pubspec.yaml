@@ -1,0 +1,45 @@
+name: moja
+description: A new Flutter project.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+version: 1.0.0+1
+environment:
+  sdk: '>=3.1.2 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Assets
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons:
+  equatable:
+  go_router:
+  intl:
+  # Widgets
+  listenable_tools:
+  widget_tools:
+  maplibre_gl:
+    git:
+      url: https://github.com/maplibre/flutter-maplibre-gl.git
+      ref: main
+  # Services
+  permission_handler:
+  firebase_messaging:
+  firebase_core:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints:
+
+flutter_gen:
+  output: lib/screen/widget/assets/
+  line_length: 80
+
+flutter:
+  uses-material-design: true
+  generate: true
+  fonts:
+    - family: Futura
+      fonts:
+        - asset: assets/fonts/Futura.ttc
