@@ -72,10 +72,10 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
               TransactionType.cashout => const HomeAccountCashOutText(),
             },
           ),
-          ValueListenableConsumer(
+          ControllerConsumer(
             autoListen: true,
             listener: _listenAccountState,
-            valueListenable: _accountService,
+            controller: _accountService,
             builder: (context, state, child) {
               return switch (state) {
                 AccountStateAccountList(:var data) => HomeAccountSliverList(

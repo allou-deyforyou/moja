@@ -189,13 +189,13 @@ class _HomeScreenState extends State<HomeScreen> {
         leading: HomeBarsFilledButton(
           onPressed: _pushMenuSheet,
         ),
-        middle: ValueListenableListener(
+        middle: ControllerListener(
+          controller: _boxService,
           listener: _listenBoxState,
-          valueListenable: _boxService,
-          child: ValueListenableConsumer(
+          child: ControllerConsumer(
             autoListen: true,
             listener: _listenPlaceState,
-            valueListenable: _placeService,
+            controller: _placeService,
             builder: (context, state, child) {
               return HomePositionFilledButton(
                 onPressed: _pushSearchSheet,
