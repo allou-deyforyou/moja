@@ -1,78 +1,103 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:pattern_formatter/pattern_formatter.dart';
 
 import '_widget.dart';
 
 class HomeAccountSliverAppBar extends StatelessWidget {
-  const HomeAccountSliverAppBar({super.key, required this.title});
-  final Widget title;
+  const HomeAccountSliverAppBar({
+    super.key,
+    required this.cashin,
+    required this.name,
+  });
+  final bool cashin;
+  final String name;
   @override
   Widget build(BuildContext context) {
+    final theme = context.theme;
     return SliverAppBar(
       pinned: true,
-      centerTitle: false,
-      automaticallyImplyLeading: false,
-      title: title,
+      centerTitle: true,
+      leadingWidth: 64.0,
+      toolbarHeight: 64.0,
+      backgroundColor: theme.colorScheme.surface,
+      leading: const Center(child: CircleAvatar()),
+      titleTextStyle: theme.textTheme.headlineLarge!.copyWith(
+        fontFamily: FontFamily.avenirNext,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.0,
+        wordSpacing: 1.5,
+      ),
+      title: const Text("DEPOT"),
       actions: const [CustomCloseButton()],
     );
   }
 }
 
-class HomeAccountCashInText extends StatelessWidget {
-  const HomeAccountCashInText({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Text("Déposer de l'argent via");
-  }
-}
-
-class HomeAccountCashOutText extends StatelessWidget {
-  const HomeAccountCashOutText({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Text("Retirer de l'argent via");
-  }
-}
-
-class HomeAccountSliverList extends StatelessWidget {
-  const HomeAccountSliverList({
+class HomeAccountAmountTextField extends StatelessWidget {
+  const HomeAccountAmountTextField({
     super.key,
-    required this.itemCount,
-    required this.itemBuilder,
+    this.controller,
   });
-  final int itemCount;
-  final NullableIndexedWidgetBuilder itemBuilder;
+  final TextEditingController? controller;
   @override
   Widget build(BuildContext context) {
-    return SliverPadding(
-      padding: kTabLabelPadding,
-      sliver: SliverList.separated(
-        itemCount: itemCount,
-        itemBuilder: itemBuilder,
-        separatorBuilder: (context, index) => const Padding(
-          padding: EdgeInsets.symmetric(vertical: 6.0),
+    final theme = context.theme;
+    final localizations = context.localizations;
+    return Container(
+      alignment: Alignment.center,
+      padding: kTabLabelPadding.copyWith(
+        bottom: kMinInteractiveDimension,
+        top: kMinInteractiveDimension,
+      ),
+      child: IntrinsicWidth(
+        child: TextField(
+          autofocus: true,
+          controller: controller,
+          textAlign: TextAlign.center,
+          keyboardType: TextInputType.number,
+          style: theme.textTheme.displayMedium!.copyWith(
+            fontWeight: FontWeight.w200,
+            letterSpacing: 1.0,
+          ),
+          inputFormatters: [
+            ThousandsFormatter(
+              formatter: defaultNumberFormat,
+            ),
+          ],
+          decoration: InputDecoration(
+            filled: false,
+            border: InputBorder.none,
+            hintText: localizations.amount,
+            focusedBorder: InputBorder.none,
+            suffixIcon: const Text("francs"),
+          ),
         ),
       ),
     );
   }
 }
 
-class HomeAccountCard extends StatelessWidget {
-  const HomeAccountCard({
+class HomeAccountSubmittedButton extends StatelessWidget {
+  const HomeAccountSubmittedButton({
     super.key,
-    this.onPressed,
-    required this.title,
+    required this.onPressed,
   });
-  final String title;
   final VoidCallback? onPressed;
   @override
   Widget build(BuildContext context) {
-    return HomeMenuListTile(
-      onTap: onPressed,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-      leading: const CircleAvatar(backgroundColor: Colors.black),
-      title: Text(title),
-      trailing: const Icon(CupertinoIcons.right_chevron, size: 14.0),
+    final localizations = context.localizations;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: kTabLabelPadding.copyWith(top: 26.0, bottom: 26.0),
+          child: CustomSubmittedButton(
+            onPressed: onPressed,
+            child: Text(localizations.edit.toUpperCase()),
+          ),
+        ),
+      ],
     );
   }
 }

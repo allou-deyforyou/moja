@@ -11,6 +11,7 @@ dependencies:
   # Assets
   flutter_localizations:
     sdk: flutter
+  pattern_formatter:
   cupertino_icons:
   equatable:
   go_router:
@@ -22,15 +23,31 @@ dependencies:
     git:
       url: https://github.com/maplibre/flutter-maplibre-gl.git
       ref: main
+  shimmer:
+  lottie:
   # Services
-  permission_handler:
   firebase_messaging:
+  permission_handler:
+  isar_flutter_libs:
   firebase_core:
+  path_provider:
+  service_tools:
+  hive_flutter:
+  url_launcher:
+  share_plus:
+  archive:
+  http:
+  isar:
+  hive:
+  dio:
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  isar_generator:
   flutter_lints:
+  build_runner:
+  analyzer:
 
 flutter_gen:
   output: lib/screen/widget/assets/
@@ -39,7 +56,21 @@ flutter_gen:
 flutter:
   uses-material-design: true
   generate: true
+  assets:
+    - assets/images/
   fonts:
-    - family: Futura
+    - family: Quicksand
       fonts:
-        - asset: assets/fonts/Futura.ttc
+        - asset: assets/fonts/Quicksand-Bold.ttf
+        - asset: assets/fonts/Quicksand-Medium.ttf
+        - asset: assets/fonts/Quicksand-SemiBold.ttf
+    - family: AvenirNext
+      fonts:
+        - asset: assets/fonts/Avenir-Next-Condensed.ttc
+        - asset: assets/fonts/Avenir-Next-Condensed-Demi.otf
+        - asset: assets/fonts/Avenir-Next-Condensed-Bold.otf
+        - asset: assets/fonts/Avenir-Next-Condensed-Medium.otf
+        - asset: assets/fonts/Avenir-Next-Condensed-Regular.otf
+    - family: Avenir
+      fonts:
+        - asset: assets/fonts/AvenirNext-Regular.ttf

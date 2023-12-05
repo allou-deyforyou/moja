@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:listenable_tools/listenable_tools.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:widget_tools/widget_tools.dart';
 
 import '_screen.dart';
@@ -16,46 +16,44 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   /// Assets
   late final BuildContext _scaffoldContext;
-  Transaction? _currentTransaction;
+  late ValueNotifier<bool> _myLocationController;
+  Account? _currentAccount;
+
+  Future<Iterable<Widget>> _suggestionsBuilder(BuildContext context, SearchController controller) async {
+    return [];
+  }
 
   void _pushMenuSheet() async {
     context.pushNamed(HomeMenuScreen.name);
   }
 
-  void _pushSearchSheet() async {
-    context.pushNamed(HomeSearchScreen.name);
-  }
-
   void _pushCashInSheet() async {
-    final data = await context.pushNamed<Transaction>(
-      HomeAccountScreen.name,
-      extra: TransactionType.cashin,
-    );
+    final data = await context.pushNamed<Account>(HomeChoiceScreen.name, extra: {
+      HomeChoiceScreen.transactionKey: Transaction.cashin,
+    });
     if (data != null) {
-      _currentTransaction = data;
-      _showBoxListSheet();
+      _currentAccount = data;
+      _openAccountListView();
     }
   }
 
   void _pushCashOutSheet() async {
-    final data = await context.pushNamed<Transaction>(
-      HomeAccountScreen.name,
-      extra: TransactionType.cashout,
-    );
+    final data = await context.pushNamed<Account>(HomeChoiceScreen.name, extra: {
+      HomeChoiceScreen.transactionKey: Transaction.cashout,
+    });
     if (data != null) {
-      _currentTransaction = data;
-      _showBoxListSheet();
+      _currentAccount = data;
+      _openAccountListView();
     }
   }
 
-  void _pushTransactionScreen() async {
-    final data = await context.pushNamed<Transaction>(
-      HomeTransactionScreen.name,
-      extra: _currentTransaction,
-    );
+  void _openTransactionScreen() async {
+    final data = await context.pushNamed<Account>(HomeAccountScreen.name, extra: {
+      HomeChoiceScreen.transactionKey: _currentAccount,
+    });
     if (data != null) {
-      _currentTransaction = data;
-      _showBoxListSheet();
+      _currentAccount = data;
+      _openAccountListView();
     }
   }
 
@@ -64,39 +62,48 @@ class _HomeScreenState extends State<HomeScreen> {
     _showFloatingActionButton();
   }
 
-  /// PlaceService
-  late final PlaceService _placeService;
+  /// MapLibre
+  MaplibreMapController? _mapController;
+  UserLocation? _userLocation;
 
-  void _listenPlaceState(BuildContext context, PlaceState state) {
-    if (state is PlaceStateInit) {
-      _searchPlace();
-    } else if (state is PlaceStatePlaceList) {
-      _searchBox();
+  void _onMapCreated(MaplibreMapController controller) {
+    _mapController = controller;
+    _goToMyPosition();
+  }
+
+  void _onMapIdle() {
+    _myLocationController.value = false;
+  }
+
+  void _onMapMoved() {}
+
+  void _onUserLocationUpdated(UserLocation location) {
+    if (_myLocationController.value) _goToPosition(location.position);
+    _userLocation = location;
+  }
+
+  void _goToPosition(LatLng position, {double zoom = 18.0}) {
+    _mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(CameraPosition(
+        target: position,
+        zoom: zoom,
+      )),
+    );
+  }
+
+  void _goToMyPosition() async {
+    if (_userLocation != null) {
+      _myLocationController.value = true;
+      _goToPosition(_userLocation!.position);
     }
-  }
-
-  Future<void> _searchPlace() {
-    return _placeService.add(const SearchPlace(live: true));
-  }
-
-  /// BoxService
-  late final BoxService _boxService;
-
-  void _listenBoxState(BuildContext context, BoxState state) {}
-
-  Future<void> _searchBox() {
-    return _boxService.add(const SearchBox(live: true));
   }
 
   @override
   void initState() {
     super.initState();
 
-    /// PlaceService
-    _placeService = PlaceService();
-
-    /// BoxService
-    _boxService = BoxService();
+    /// Assets
+    _myLocationController = ValueNotifier(false);
   }
 
   void _showBoxItemBottomSheet() async {
@@ -104,41 +111,41 @@ class _HomeScreenState extends State<HomeScreen> {
       context: _scaffoldContext,
       builder: (context) {
         return HomeAccountItemBottomSheet(
-          trailing: HomeSelectorListTile(onTap: _pushTransactionScreen),
+          trailing: HomeSelectorListTile(onTap: _openTransactionScreen),
           child: const SizedBox.shrink(),
         );
       },
     );
     if (data != null) {
     } else {
-      _showBoxListSheet();
+      _openAccountListView();
     }
   }
 
-  void _showBoxListSheet() async {
+  void _openAccountListView() async {
     final data = await showCustomBottomSheet(
       context: _scaffoldContext,
       builder: (context) {
-        return ValueListenableBuilder(
-          valueListenable: _boxService,
-          child: HomeSelectorListTile(onTap: _pushTransactionScreen),
-          builder: (context, state, trailing) {
-            return HomeAccountListView(
-              trailing: trailing,
-              itemCount: 10,
+        return HomeSliverBottomSheet(
+          slivers: [
+            HomeAccountAppBar(
+              bottom: HomeAccountSelectedWidget(
+                onTap: () {},
+              ),
+            ),
+            SliverPadding(padding: kMaterialListPadding / 2),
+            SliverList.builder(
+              itemCount: 20,
               itemBuilder: (context, index) {
-                return HomeAccountItemCard(
-                  title: const Text("Boba Pro"),
-                  subtitle: const Text("Angré Marché"),
-                  onPressed: _showBoxItemBottomSheet,
+                return HomeAccountItemWidget(
+                  onTap: _showBoxItemBottomSheet,
                 );
               },
-            );
-          },
+            ),
+          ],
         );
       },
     );
-
     if (data != null) {
     } else {
       _showFloatingActionButton();
@@ -149,21 +156,24 @@ class _HomeScreenState extends State<HomeScreen> {
     final data = await showCustomBottomSheet(
       context: _scaffoldContext,
       builder: (context) {
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              HomeCashInFloatingActionButton(
-                onPressed: _pushCashInSheet,
-              ),
-              const SizedBox(height: 8.0),
-              HomeCashOutFloatingActionButton(
-                onPressed: _pushCashOutSheet,
-              ),
-            ],
+        return SafeArea(
+          top: false,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                HomeCashInFloatingActionButton(
+                  onPressed: _pushCashInSheet,
+                ),
+                const Padding(padding: kMaterialListPadding),
+                HomeCashOutFloatingActionButton(
+                  onPressed: _pushCashOutSheet,
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -178,34 +188,39 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true,
       extendBodyBehindAppBar: true,
-      resizeToAvoidBottomInset: true,
-      body: AfterLayout(
-        afterLayout: _afterLayout,
-        child: const Placeholder(),
-      ),
-      appBar: HomeAppBar(
-        leading: HomeBarsFilledButton(
-          onPressed: _pushMenuSheet,
-        ),
-        middle: ControllerListener(
-          controller: _boxService,
-          listener: _listenBoxState,
-          child: ControllerConsumer(
-            autoListen: true,
-            listener: _listenPlaceState,
-            controller: _placeService,
-            builder: (context, state, child) {
-              return HomePositionFilledButton(
-                onPressed: _pushSearchSheet,
-                child: const Text("Koumassi Mairie"),
+      resizeToAvoidBottomInset: false,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerTop,
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          HomeMenuButton(
+            onPressed: _pushMenuSheet,
+          ),
+          Flexible(
+            child: HomePositionButton(
+              suggestionsBuilder: _suggestionsBuilder,
+              title: "Koumassi Mairie",
+            ),
+          ),
+          ValueListenableBuilder(
+            valueListenable: _myLocationController,
+            builder: (context, active, child) {
+              return HomeLocationButton(
+                onChanged: (value) => _goToMyPosition(),
+                active: active,
               );
             },
           ),
-        ),
-        trailing: HomeNotifsFilledButton(
-          onPressed: () {},
+        ],
+      ),
+      body: AfterLayout(
+        afterLayout: _afterLayout,
+        child: ProfileLocationMap(
+          onMapIdle: _onMapIdle,
+          onMapMoved: _onMapMoved,
+          onMapCreated: _onMapCreated,
+          onUserLocationUpdated: _onUserLocationUpdated,
         ),
       ),
     );

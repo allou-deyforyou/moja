@@ -13,44 +13,35 @@ class HomeMenuScreen extends StatefulWidget {
 class _HomeMenuScreenState extends State<HomeMenuScreen> {
   @override
   Widget build(BuildContext context) {
-    const space = SliverToBoxAdapter(child: SizedBox(height: 4.0));
-    const largeSpace = SliverToBoxAdapter(child: SizedBox(height: 26.0));
-
+    const divider = SliverToBoxAdapter(
+      child: Divider(thickness: 4.0, height: 4.0),
+    );
     return Scaffold(
       body: CustomScrollView(
-        controller: PrimaryScrollController.maybeOf(context),
         slivers: [
           const HomeMenuAppBar(),
-          SliverPadding(
-            padding: kTabLabelPadding,
-            sliver: SliverMainAxisGroup(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: HomeMenuNotifsListTile(
-                    onChanged: (value) {},
-                    value: true,
-                  ),
-                ),
-                space,
-                SliverToBoxAdapter(
-                  child: HomeMenuThemeListTile(
-                    onTap: () {},
-                    trailing: const Text("Systeme"),
-                  ),
-                ),
-                largeSpace,
-                SliverToBoxAdapter(
-                  child: HomeMenuSupportListTile(
-                    onTap: () {},
-                  ),
-                ),
-                space,
-                SliverToBoxAdapter(
-                  child: HomeMenuShareListTile(
-                    onTap: () {},
-                  ),
-                ),
-              ],
+          SliverPadding(padding: kMaterialListPadding / 2),
+          SliverToBoxAdapter(
+            child: HomeMenuNotifs(
+              onChanged: (value) {},
+              value: true,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: HomeMenuTheme(
+              value: "Systeme",
+              onTap: () {},
+            ),
+          ),
+          divider,
+          SliverToBoxAdapter(
+            child: HomeMenuSupport(
+              onTap: () {},
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: HomeMenuShare(
+              onTap: () {},
             ),
           ),
         ],

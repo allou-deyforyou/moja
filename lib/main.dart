@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'screen/_screen.dart';
 
@@ -24,6 +26,7 @@ class _MyAppState extends State<MyApp> {
 
     /// Assets
     _router = GoRouter(
+      initialLocation: OnBoardingScreen.path,
       routes: [
         GoRoute(
           name: HomeScreen.name,
@@ -38,17 +41,9 @@ class _MyAppState extends State<MyApp> {
               name: HomeMenuScreen.name,
               path: HomeMenuScreen.path,
               pageBuilder: (context, state) {
-                return const DialogPage(
+                return const CupertinoPage(
+                  fullscreenDialog: true,
                   child: HomeMenuScreen(),
-                );
-              },
-            ),
-            GoRoute(
-              name: HomeSearchScreen.name,
-              path: HomeSearchScreen.path,
-              pageBuilder: (context, state) {
-                return const DialogPage(
-                  child: HomeSearchScreen(),
                 );
               },
             ),
@@ -56,27 +51,36 @@ class _MyAppState extends State<MyApp> {
               name: HomeAccountScreen.name,
               path: HomeAccountScreen.path,
               pageBuilder: (context, state) {
-                final data = state.extra as TransactionType;
-                return DialogPage<Transaction>(
+                final data = state.extra as Map<String, dynamic>;
+                return DialogPage<Account>(
                   child: HomeAccountScreen(
-                    transactionType: data,
+                    account: data[HomeAccountScreen.accountKey],
                   ),
                 );
               },
             ),
             GoRoute(
-              name: HomeTransactionScreen.name,
-              path: HomeTransactionScreen.path,
+              name: HomeChoiceScreen.name,
+              path: HomeChoiceScreen.path,
               pageBuilder: (context, state) {
-                final data = state.extra as Transaction;
-                return DialogPage<Transaction>(
-                  child: HomeTransactionScreen(
-                    transaction: data,
+                final data = state.extra as Map<String, dynamic>;
+                return DialogPage<Account>(
+                  child: HomeChoiceScreen(
+                    transaction: data[HomeChoiceScreen.transactionKey],
                   ),
                 );
               },
             ),
           ],
+        ),
+        GoRoute(
+          name: OnBoardingScreen.name,
+          path: OnBoardingScreen.path,
+          pageBuilder: (context, state) {
+            return const CupertinoPage(
+              child: OnBoardingScreen(),
+            );
+          },
         ),
       ],
     );
@@ -85,7 +89,8 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       darkTheme: AppThemes.darkTheme,
       theme: AppThemes.theme,
       routerConfig: _router,
