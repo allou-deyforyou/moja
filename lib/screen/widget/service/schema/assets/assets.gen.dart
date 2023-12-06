@@ -16,8 +16,12 @@ class $AssetsImagesGen {
   AssetGenImage get onboarding =>
       const AssetGenImage('assets/images/onboarding.jpg');
 
+  /// File path: assets/images/whatsapp_icon.png
+  AssetGenImage get whatsappIcon =>
+      const AssetGenImage('assets/images/whatsapp_icon.png');
+
   /// List of all assets
-  List<AssetGenImage> get values => [onboarding];
+  List<AssetGenImage> get values => [onboarding, whatsappIcon];
 }
 
 class Assets {

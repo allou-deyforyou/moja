@@ -1,26 +1,32 @@
 {
     "getstarted": "get started",
-    "login": "log in",
-    "changephonenumber": "change phone number",
-    "phonenumber": "phone number",
     "next": "next",
-    "country": "country",
     "ok": "ok",
-    "rightnumber": "is this the right number?",
-    "yes": "yes",
     "confirm": "confirm",
-    "code": "code",
-    "resendcode": "resend code",
     "completed": "completed",
-    "createrelaypoint": "create a relay point",
-    "relaypointname": "relay point name",
-    "myamounts": "My Balances",
-    "offline": "off\nline",
-    "online": "on\nline",
+    "searchdepositpoints": "search for deposit points",
+    "searchwithdrawalpoints": "search for withdrawal points",
+    "deposit": "{name} deposit",
+    "@deposit": {
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "Wave"
+            }
+        }
+    },
+    "withdrawal": "{name} withdrawal",
+    "@withdrawal": {
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "Wave"
+            }
+        }
+    },
     "amount": "amount",
     "edit": "edit",
     "menu": "menu",
-    "relaypointprofile": "relay point profile",
     "notifications": "notifications",
     "enablenotification": "enable notification",
     "disablednotification": "the notification is disabled, open the application settings and activate it.",
@@ -31,7 +37,6 @@
     "email": "email",
     "whatsapp": "whatsapp",
     "shareapp": "share the app",
-    "logout": "log out",
     "light": "light",
     "dark": "dark",
     "system": "system",

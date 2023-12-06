@@ -25,7 +25,7 @@ class Account extends Equatable {
 
   static const String idKey = 'id';
   static const String nameKey = 'name';
-  static const String amountKey = 'amount';
+  static const String amountKey = 'balance';
   static const String transactionKey = 'transaction';
 
   Id get isarId => id.fastHash;

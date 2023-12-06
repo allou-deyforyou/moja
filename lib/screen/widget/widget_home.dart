@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:widget_tools/widget_tools.dart';
 
 import '_widget.dart';
@@ -679,10 +680,11 @@ class HomeSliverBottomSheet extends StatelessWidget {
     return DraggableScrollableSheet(
       snap: true,
       expand: false,
-      minChildSize: 0.0,
+      minChildSize: 0.7,
       maxChildSize: 1.0,
       initialChildSize: 0.7,
-      snapSizes: const [0.0, 0.7, 1.0],
+      snapSizes: const [0.7, 1.0],
+      shouldCloseOnMinExtent: false,
       builder: (context, scrollController) {
         return NestedScrollView(
           controller: scrollController,
@@ -699,19 +701,21 @@ class HomeSliverBottomSheet extends StatelessWidget {
               ),
             ];
           },
-          body: HomeBottomSheetBackground(
-            child: CustomScrollView(
-              controller: scrollController,
-              slivers: [
-                ...slivers,
-                const SliverSafeArea(
-                  sliver: SliverToBoxAdapter(
-                    child: SizedBox(height: kMinInteractiveDimension),
+          body: Builder(builder: (context) {
+            return HomeBottomSheetBackground(
+              child: CustomScrollView(
+                controller: scrollController,
+                slivers: [
+                  ...slivers,
+                  const SliverSafeArea(
+                    sliver: SliverToBoxAdapter(
+                      child: SizedBox(height: kMinInteractiveDimension),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
+                ],
+              ),
+            );
+          }),
         );
       },
     );
@@ -721,13 +725,15 @@ class HomeSliverBottomSheet extends StatelessWidget {
 class HomeAccountAppBar extends StatelessWidget {
   const HomeAccountAppBar({
     super.key,
+    required this.cashin,
     required this.bottom,
   });
+  final bool cashin;
   final Widget bottom;
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
-    // final localizations = context.localizations;
+    final localizations = context.localizations;
     return SliverAppBar(
       pinned: true,
       elevation: 0.12,
@@ -744,7 +750,11 @@ class HomeAccountAppBar extends StatelessWidget {
           letterSpacing: 0.5,
           wordSpacing: 1.0,
         ),
-        child: Text("Recherche de Points Relais".toUpperCase()),
+        child: Visibility(
+          visible: cashin,
+          replacement: Text(localizations.searchwithdrawalpoints.toUpperCase()),
+          child: Text(localizations.searchdepositpoints.toUpperCase()),
+        ),
       ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(kMinInteractiveDimension),
@@ -762,8 +772,12 @@ class HomeAccountAppBar extends StatelessWidget {
 class HomeAccountSelectedWidget extends StatelessWidget {
   const HomeAccountSelectedWidget({
     super.key,
+    required this.name,
+    required this.amount,
     required this.onTap,
   });
+  final String name;
+  final double amount;
   final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
@@ -782,13 +796,13 @@ class HomeAccountSelectedWidget extends StatelessWidget {
           fontWeight: FontWeight.w600,
           letterSpacing: 0.0,
         ),
-        child: const Text("Depot Orange Money"),
+        child: Text(name),
       ),
       trailing: DefaultTextStyle.merge(
         style: theme.textTheme.titleMedium!.copyWith(
           color: theme.colorScheme.primary,
         ),
-        child: const Text("1.000 f"),
+        child: Text("$amount f"),
       ),
     );
   }
@@ -797,8 +811,12 @@ class HomeAccountSelectedWidget extends StatelessWidget {
 class HomeAccountItemWidget extends StatelessWidget {
   const HomeAccountItemWidget({
     super.key,
+    required this.name,
+    required this.location,
     required this.onTap,
   });
+  final String name;
+  final String location;
   final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
@@ -816,7 +834,7 @@ class HomeAccountItemWidget extends StatelessWidget {
           fontSize: 18.0,
           height: 1.2,
         ),
-        child: const Text("Ali Services"),
+        child: Text(name),
       ),
       subtitle: DefaultTextStyle.merge(
         style: theme.textTheme.titleMedium!.copyWith(
@@ -824,9 +842,48 @@ class HomeAccountItemWidget extends StatelessWidget {
           letterSpacing: 0.0,
           height: 1.5,
         ),
-        child: const Text("Cocody PMI"),
+        child: Text(location),
       ),
       trailing: const Text("100 m"),
+    );
+  }
+}
+
+class HomeAccountLoadingListView extends StatelessWidget {
+  const HomeAccountLoadingListView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final color = theme.colorScheme.surfaceVariant.withOpacity(0.12);
+    final textWidget = Container(
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.all(4.0),
+      child: Container(
+        height: 10.0,
+        width: 80.0,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+      ),
+    );
+    return Shimmer.fromColors(
+      baseColor: theme.colorScheme.onSurfaceVariant,
+      highlightColor: theme.colorScheme.onInverseSurface,
+      child: ListView.builder(
+        itemCount: 4,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemBuilder: (context, index) {
+          return CustomListTile(
+            title: textWidget,
+            trailing: const SizedBox.shrink(),
+            leading: CircleAvatar(backgroundColor: color),
+            subtitle: SizedBox(width: 100.0, child: textWidget),
+          );
+        },
+      ),
     );
   }
 }

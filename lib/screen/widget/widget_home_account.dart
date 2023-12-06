@@ -14,20 +14,26 @@ class HomeAccountSliverAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
+    final localizations = context.localizations;
     return SliverAppBar(
       pinned: true,
       centerTitle: true,
       leadingWidth: 64.0,
       toolbarHeight: 64.0,
       backgroundColor: theme.colorScheme.surface,
-      leading: const Center(child: CircleAvatar()),
-      titleTextStyle: theme.textTheme.headlineLarge!.copyWith(
+      titleTextStyle: theme.textTheme.headlineSmall!.copyWith(
+        color: theme.colorScheme.onSurface,
         fontFamily: FontFamily.avenirNext,
         fontWeight: FontWeight.w600,
-        letterSpacing: 1.0,
-        wordSpacing: 1.5,
+        letterSpacing: 0.0,
+        wordSpacing: 1.0,
       ),
-      title: const Text("DEPOT"),
+      leading: const Center(child: CircleAvatar()),
+      title: Visibility(
+        visible: cashin,
+        replacement: Text(localizations.withdrawal(name).toUpperCase()),
+        child: Text(localizations.deposit(name).toUpperCase()),
+      ),
       actions: const [CustomCloseButton()],
     );
   }
@@ -85,7 +91,6 @@ class HomeAccountSubmittedButton extends StatelessWidget {
   final VoidCallback? onPressed;
   @override
   Widget build(BuildContext context) {
-    final localizations = context.localizations;
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -94,7 +99,7 @@ class HomeAccountSubmittedButton extends StatelessWidget {
           padding: kTabLabelPadding.copyWith(top: 26.0, bottom: 26.0),
           child: CustomSubmittedButton(
             onPressed: onPressed,
-            child: Text(localizations.edit.toUpperCase()),
+            child: Text(MaterialLocalizations.of(context).searchFieldLabel.toUpperCase()),
           ),
         ),
       ],

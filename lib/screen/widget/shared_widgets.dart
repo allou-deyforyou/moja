@@ -60,6 +60,7 @@ class CustomCloseButton extends StatelessWidget {
 class CustomListTile extends StatelessWidget {
   const CustomListTile({
     super.key,
+    this.contentPadding,
     this.textColor,
     this.splashColor,
     this.onTap,
@@ -68,6 +69,7 @@ class CustomListTile extends StatelessWidget {
     this.subtitle,
     this.trailing,
   });
+  final EdgeInsetsGeometry? contentPadding;
   final Color? textColor;
   final Color? splashColor;
   final VoidCallback? onTap;
@@ -81,7 +83,7 @@ class CustomListTile extends StatelessWidget {
     return ListTile(
       textColor: textColor,
       splashColor: splashColor,
-      contentPadding: kTabLabelPadding.copyWith(top: 6.0, bottom: 6.0),
+      contentPadding: contentPadding ?? kTabLabelPadding.copyWith(top: 6.0, bottom: 6.0),
       titleTextStyle: theme.textTheme.titleMedium!.copyWith(
         letterSpacing: 0.0,
         fontSize: 18.0,

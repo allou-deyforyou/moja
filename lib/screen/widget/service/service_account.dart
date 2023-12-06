@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:isar/isar.dart';
 import 'package:listenable_tools/async.dart';
 
 import '_service.dart';
@@ -11,7 +12,7 @@ class SelectAccountEvent extends AsyncEvent<AsyncState> {
     try {
       emit(const PendingState());
 
-      final responses = await sql('SELECT * FROM ${Account.schema}');
+      final responses = await sql('SELECT * FROM ${Account.schema} WHERE cash=NONE');
 
       final List response = responses.first;
       final data = List.of(response.map((data) => Account.fromMap(data)!));
@@ -28,34 +29,39 @@ class SelectAccountEvent extends AsyncEvent<AsyncState> {
   }
 }
 
-class SetAccountEvent extends AsyncEvent<AsyncState> {
-  const SetAccountEvent({
-    required this.account,
-    required this.balance,
-    required this.relay,
+class LoadAccountEvent extends AsyncEvent<AsyncState> {
+  const LoadAccountEvent({
+    this.listen = false,
   });
-  final Account account;
-  final Account relay;
-
-  final double balance;
-
+  final bool listen;
   @override
   Future<void> handle(AsyncEmitter<AsyncState> emit) async {
     try {
       emit(const PendingState());
-      final relayId = relay.id;
-      final accountId = account.id;
-
-      final accountQuery = 'LET \$created_id = SELECT VALUE id FROM ONLY created WHERE (in = $relayId and out=$accountId);';
-      final accountUpdate = 'RETURN UPDATE ONLY \$created_id SET balance=$balance;';
-      final accountCreate = 'RETURN RELATE ONLY $relayId->created->$accountId SET balance=$balance;';
-      await sql('$accountQuery RETURN IF (\$created_id != NONE) {$accountUpdate} ELSE {$accountCreate};');
-
-      final data = account.copyWith(amount: balance);
-
-      await SaveAccountEvent(accounts: [data]).handle(emit);
-
-      emit(SuccessState(data));
+      if (listen) {
+        final stream = IsarLocalDB.isar.accounts.watchLazy(fireImmediately: true);
+        await stream.forEach((data) async {
+          final data = await IsarLocalDB.isar.accounts.where().findAll();
+          if (data.isNotEmpty) {
+            emit(SuccessState(data));
+          } else {
+            emit(FailureState(
+              code: 'no-record',
+              event: this,
+            ));
+          }
+        });
+      } else {
+        final data = await IsarLocalDB.isar.accounts.where().findAll();
+        if (data.isNotEmpty) {
+          emit(SuccessState(data));
+        } else {
+          emit(FailureState(
+            code: 'no-record',
+            event: this,
+          ));
+        }
+      }
     } catch (error) {
       emit(FailureState(
         code: error.toString(),

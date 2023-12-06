@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '_widget.dart';
 
@@ -7,7 +9,7 @@ class HomeMenuAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
-    // final localizations = context.localizations;
+    final localizations = context.localizations;
     return SliverAppBar(
       pinned: true,
       centerTitle: false,
@@ -17,7 +19,7 @@ class HomeMenuAppBar extends StatelessWidget {
         fontFamily: FontFamily.avenirNext,
         fontWeight: FontWeight.w600,
       ),
-      title: const Text("MENU"),
+      title: Text(localizations.menu.toUpperCase()),
       actions: const [CustomCloseButton()],
     );
   }
@@ -86,7 +88,7 @@ class HomeLanguageTheme extends StatelessWidget {
       title: Text(localizations.language.capitalize()),
       trailing: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4.0),
-        child: Text(value ?? 'system'),
+        child: Text(value ?? localizations.system.capitalize()),
       ),
     );
   }
@@ -120,6 +122,294 @@ class HomeMenuShare extends StatelessWidget {
     return CustomListTile(
       onTap: onTap,
       title: Text(localizations.shareapp.capitalize()),
+    );
+  }
+}
+
+class HomeMenuNotifisModal extends StatelessWidget {
+  const HomeMenuNotifisModal({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final localizations = context.localizations;
+    return AlertDialog(
+      elevation: 1.0,
+      insetPadding: kTabLabelPadding,
+      backgroundColor: theme.colorScheme.surface,
+      contentTextStyle: theme.textTheme.bodyLarge,
+      actionsAlignment: MainAxisAlignment.spaceBetween,
+      titleTextStyle: theme.textTheme.headlineMedium!.copyWith(
+        fontFamily: FontFamily.avenirNext,
+        fontWeight: FontWeight.w600,
+      ),
+      titlePadding: const EdgeInsets.only(
+        bottom: 16.0,
+        right: 24.0,
+        left: 24.0,
+        top: 24.0,
+      ),
+      title: SizedBox(
+        width: double.maxFinite,
+        child: Text(localizations.enablenotification.capitalize()),
+      ),
+      content: Text(localizations.disablednotification.capitalize()),
+      actions: [
+        TextButton(
+          style: TextButton.styleFrom(foregroundColor: theme.colorScheme.onSurfaceVariant),
+          onPressed: Navigator.of(context).pop,
+          child: DefaultTextStyle.merge(
+            style: const TextStyle(
+              fontFamily: FontFamily.avenir,
+            ),
+            child: Text(localizations.cancel.toUpperCase()),
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: DefaultTextStyle.merge(
+            style: const TextStyle(
+              fontFamily: FontFamily.avenir,
+              fontWeight: FontWeight.w600,
+            ),
+            child: Text(localizations.open.toUpperCase()),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class HomeMenuModal<T> extends StatefulWidget {
+  const HomeMenuModal({
+    super.key,
+    required this.title,
+    required this.values,
+    required this.selected,
+    required this.formatted,
+    required this.onSelected,
+  });
+
+  final String title;
+
+  final T? selected;
+  final List<T> values;
+  final String Function(T value) formatted;
+  final ValueChanged<T> onSelected;
+
+  @override
+  State<HomeMenuModal<T>> createState() => _HomeMenuModalState<T>();
+}
+
+class _HomeMenuModalState<T> extends State<HomeMenuModal<T>> {
+  late T? _selected;
+  late List<T> _values;
+
+  ValueChanged<bool?> _onChanged(T item) {
+    return (_) {
+      widget.onSelected(item);
+      setState(() => _selected = item);
+    };
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _values = widget.values;
+    _selected = widget.selected;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final localizations = context.localizations;
+    return AlertDialog(
+      elevation: 1.0,
+      insetPadding: kTabLabelPadding,
+      backgroundColor: theme.colorScheme.surface,
+      actionsAlignment: MainAxisAlignment.spaceBetween,
+      titleTextStyle: theme.textTheme.headlineMedium!.copyWith(
+        fontFamily: FontFamily.avenirNext,
+        fontWeight: FontWeight.w600,
+      ),
+      title: SizedBox(
+        width: double.maxFinite,
+        child: Text(widget.title.toUpperCase()),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          children: List.of(_values.map((item) {
+            return CheckboxListTile(
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(16.0),
+                ),
+              ),
+              checkboxShape: const CircleBorder(),
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
+              value: _selected == item,
+              onChanged: _onChanged(item),
+              title: Text(widget.formatted(item).capitalize()),
+            );
+          })),
+        ),
+      ),
+      actions: [
+        TextButton(
+          style: TextButton.styleFrom(foregroundColor: theme.colorScheme.onSurfaceVariant),
+          onPressed: Navigator.of(context).pop,
+          child: DefaultTextStyle.merge(
+            style: const TextStyle(
+              fontFamily: FontFamily.avenir,
+            ),
+            child: Text(localizations.cancel.toUpperCase()),
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, _selected),
+          child: DefaultTextStyle.merge(
+            style: const TextStyle(
+              fontFamily: FontFamily.avenir,
+              fontWeight: FontWeight.w600,
+            ),
+            child: Text(localizations.apply.toUpperCase()),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class HomeMenuThemeModal<T> extends StatelessWidget {
+  const HomeMenuThemeModal({
+    super.key,
+    required this.selected,
+    required this.onSelected,
+  });
+  final ThemeMode selected;
+  final ValueChanged<ThemeMode> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = context.localizations;
+    return HomeMenuModal<ThemeMode>(
+      formatted: (value) => value.format(context),
+      title: localizations.theme.capitalize(),
+      values: ThemeMode.values,
+      onSelected: onSelected,
+      selected: selected,
+    );
+  }
+}
+
+class HomeMenuLanguageModal<T> extends StatelessWidget {
+  const HomeMenuLanguageModal({
+    super.key,
+    required this.selected,
+    required this.onSelected,
+  });
+  final ValueChanged<Locale> onSelected;
+  final Locale? selected;
+  @override
+  Widget build(BuildContext context) {
+    final localizations = context.localizations;
+    const system = Locale('system');
+    final supportedLocales = List<Locale>.from(AppLocalizations.supportedLocales);
+    supportedLocales.insert(0, system);
+    return HomeMenuModal<Locale>(
+      title: localizations.language.capitalize(),
+      formatted: (value) => value.format(context),
+      selected: selected ?? system,
+      values: supportedLocales,
+      onSelected: onSelected,
+    );
+  }
+}
+
+class HomeMenuSupportModal extends StatelessWidget {
+  const HomeMenuSupportModal({
+    super.key,
+    required this.children,
+  });
+  final List<Widget> children;
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final localizations = context.localizations;
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      appBar: AppBar(
+        centerTitle: false,
+        toolbarHeight: 64.0,
+        automaticallyImplyLeading: false,
+        backgroundColor: theme.colorScheme.surface,
+        titleTextStyle: theme.textTheme.headlineMedium!.copyWith(
+          fontFamily: FontFamily.avenirNext,
+          fontWeight: FontWeight.w600,
+        ),
+        title: Text(localizations.helporsuggestions.toUpperCase()),
+        actions: const [CustomCloseButton()],
+      ),
+      body: CustomScrollView(
+        slivers: [
+          const SliverPadding(padding: kMaterialListPadding),
+          SliverList.separated(
+            itemCount: children.length,
+            separatorBuilder: (context, index) {
+              return Padding(padding: kMaterialListPadding / 2);
+            },
+            itemBuilder: (context, index) {
+              return children[index];
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class HomeMenuSupportEmailWidget extends StatelessWidget {
+  const HomeMenuSupportEmailWidget({
+    super.key,
+    required this.onTap,
+    required this.email,
+  });
+  final VoidCallback? onTap;
+  final String email;
+  @override
+  Widget build(BuildContext context) {
+    final localizations = context.localizations;
+    return CustomListTile(
+      onTap: onTap,
+      leading: const Icon(CupertinoIcons.mail, size: 20.0),
+      title: Text(localizations.email.capitalize()),
+      trailing: Text(email),
+    );
+  }
+}
+
+class HomeMenuSupportWhatsappWidget extends StatelessWidget {
+  const HomeMenuSupportWhatsappWidget({
+    super.key,
+    required this.onTap,
+    required this.phone,
+  });
+  final VoidCallback? onTap;
+  final String phone;
+  @override
+  Widget build(BuildContext context) {
+    final localizations = context.localizations;
+    return CustomListTile(
+      onTap: onTap,
+      leading: Assets.images.whatsappIcon.image(
+        color: CupertinoColors.activeGreen,
+        height: 26.0,
+        width: 26.0,
+      ),
+      title: Text(localizations.whatsapp.capitalize()),
+      trailing: Text(phone),
     );
   }
 }

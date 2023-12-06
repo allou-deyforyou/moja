@@ -22,8 +22,12 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
 
   late TextEditingController _amountTextController;
 
+  double get _amount {
+    return double.tryParse(_amountTextController.text.replaceAll('.', '').trimSpace()) ?? 0;
+  }
+
   void _onSubmitted() {
-    context.pop(_currentAccount);
+    context.pop(_currentAccount.copyWith(amount: _amount));
   }
 
   @override
@@ -43,8 +47,8 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
         controller: PrimaryScrollController.maybeOf(context),
         slivers: [
           HomeAccountSliverAppBar(
+            cashin: _currentAccount.transaction == Transaction.cashin,
             name: _currentAccount.name,
-            cashin: false,
           ),
           SliverToBoxAdapter(
             child: HomeAccountAmountTextField(

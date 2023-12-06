@@ -14,7 +14,13 @@ class SelectRelayEvent extends AsyncEvent<AsyncState> {
     try {
       emit(const PendingState());
 
-      final responses = await sql('SELECT * FROM ${Relay.schema}');
+      final relayAccountFilters = 'WHERE ->(created WHERE out = ${account.id} AND ${Account.amountKey} >= ${account.amount})';
+      final relayCashFilters = 'AND ->(created WHERE out = ${Account.schema}:cash AND ${Account.amountKey} >= ${account.amount})';
+      final selectRelay = 'SELECT * FROM ${Relay.schema} $relayAccountFilters';
+      final responses = await sql(switch (account.transaction!) {
+        Transaction.cashout => '$selectRelay $relayCashFilters',
+        Transaction.cashin => selectRelay,
+      });
 
       final List response = responses.first;
       final data = List.of(response.map((data) => Relay.fromMap(data)!));

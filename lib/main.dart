@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+import 'package:service_tools/service_tools.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'screen/_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runService(const MyService()).then((value) => runApp(const MyApp()));
 }
 
 class MyApp extends StatefulWidget {
@@ -20,11 +21,23 @@ class _MyAppState extends State<MyApp> {
   /// Assets
   late final GoRouter _router;
 
+  Stream<ThemeMode>? _themeModeStream;
+  ThemeMode? _currentThemeMode;
+
+  Stream<Locale?>? _localeStream;
+  Locale? _currentLocale;
+
   @override
   void initState() {
     super.initState();
 
     /// Assets
+    _currentLocale = HiveLocalDB.locale;
+    _localeStream = HiveLocalDB.localeStream;
+
+    _currentThemeMode = HiveLocalDB.themeMode;
+    _themeModeStream = HiveLocalDB.themeModeStream;
+
     _router = GoRouter(
       initialLocation: OnBoardingScreen.path,
       routes: [
@@ -88,12 +101,27 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      darkTheme: AppThemes.darkTheme,
-      theme: AppThemes.theme,
-      routerConfig: _router,
+    return StreamBuilder(
+      stream: _localeStream,
+      initialData: _currentLocale,
+      builder: (context, localeSnapshot) {
+        return StreamBuilder<ThemeMode>(
+          stream: _themeModeStream,
+          initialData: _currentThemeMode,
+          builder: (context, themeModeSnapshot) {
+            return MaterialApp.router(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              themeMode: themeModeSnapshot.data,
+              color: AppThemes.primaryColor,
+              darkTheme: AppThemes.darkTheme,
+              locale: localeSnapshot.data,
+              theme: AppThemes.theme,
+              routerConfig: _router,
+            );
+          },
+        );
+      },
     );
   }
 }

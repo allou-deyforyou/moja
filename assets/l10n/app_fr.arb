@@ -1,26 +1,32 @@
 {
     "getstarted": "commencer",
-    "login": "s'authentifier",
-    "changephonenumber": "changer de numéro",
-    "phonenumber": "numéro de téléphone",
     "next": "suivant",
-    "country": "pays",
     "ok": "ok",
-    "rightnumber": "est-ce le bon numéro ?",
-    "yes": "oui",
     "confirm": "confirmer",
-    "code": "code",
-    "resendcode": "renvoyer le code",
     "completed": "terminé",
-    "createrelaypoint": "créer un point relais",
-    "relaypointname": "nom du point relais",
-    "mybalances": "Mes Soldes",
-    "offline": "hors\nligne",
-    "online": "en\nligne",
+    "searchdepositpoints": "recherche de points de dépôt",
+    "searchwithdrawalpoints": "recherche de points de retrait",
+    "deposit": "dépôt {name}",
+    "@deposit": {
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "Wave"
+            }
+        }
+    },
+    "withdrawal": "retrait {name}",
+    "@withdrawal": {
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "Wave"
+            }
+        }
+    },
     "amount": "montant",
     "edit": "modifier",
     "menu": "menu",
-    "relaypointprofile": "profil du point relais",
     "notifications": "notifications",
     "enablenotification": "activer la notification",
     "disablednotification": "la notification est désactivée, ouvrez les paramètres de l'application et activez-la.",
@@ -31,7 +37,6 @@
     "email": "e-mail",
     "whatsapp": "whatsapp",
     "shareapp": "partager l'app",
-    "logout": "se déconnecter",
     "light": "clair",
     "dark": "sombre",
     "system": "système",

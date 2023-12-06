@@ -12,6 +12,7 @@ class HomeChoiceSliverAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
+    final localizations = context.localizations;
     return SliverAppBar(
       pinned: true,
       centerTitle: false,
@@ -19,13 +20,18 @@ class HomeChoiceSliverAppBar extends StatelessWidget {
       toolbarHeight: 64.0,
       automaticallyImplyLeading: false,
       backgroundColor: theme.colorScheme.surface,
-      titleTextStyle: theme.textTheme.headlineLarge!.copyWith(
+      titleTextStyle: theme.textTheme.headlineSmall!.copyWith(
+        color: theme.colorScheme.onSurface,
         fontFamily: FontFamily.avenirNext,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.0,
         wordSpacing: 1.0,
       ),
-      title: const Text("DEPOT"),
+      title: Visibility(
+        visible: cashin,
+        replacement: Text(localizations.searchwithdrawalpoints.toUpperCase()),
+        child: Text(localizations.searchdepositpoints.toUpperCase()),
+      ),
       actions: const [CustomCloseButton()],
     );
   }
@@ -43,6 +49,7 @@ class HomeChoiceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomListTile(
       onTap: onPressed,
+      contentPadding: kTabLabelPadding.copyWith(top: 16.0, bottom: 16.0),
       leading: const CircleAvatar(backgroundColor: Colors.black),
       title: Text(title),
       trailing: const Icon(CupertinoIcons.right_chevron, size: 14.0),

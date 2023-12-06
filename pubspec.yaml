@@ -50,7 +50,7 @@ dev_dependencies:
   analyzer:
 
 flutter_gen:
-  output: lib/screen/widget/assets/
+  output: lib/screen/widget/service/schema/assets/
   line_length: 80
 
 flutter:

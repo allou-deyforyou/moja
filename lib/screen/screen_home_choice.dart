@@ -10,8 +10,8 @@ class HomeChoiceScreen extends StatefulWidget {
     required this.transaction,
   });
   final Transaction transaction;
-  static const name = 'home-account';
-  static const path = 'account';
+  static const name = 'home-choice';
+  static const path = 'choice';
   static const transactionKey = 'transaction';
   @override
   State<HomeChoiceScreen> createState() => _HomeChoiceScreenState();
@@ -37,9 +37,15 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
 
   void _listenAccountState(BuildContext context, AsyncState state) {
     if (state is InitState) {
-      _selectAccount();
+      _loadAccount();
     } else if (state case SuccessState<List<Account>>(:final data)) {
       _relayAccounts = data;
+    } else if (state case FailureState<LoadAccountEvent>(:final code)) {
+      switch (code) {
+        case 'no-record':
+          _selectAccount();
+          break;
+      }
     } else if (state case FailureState<SelectAccountEvent>(:final code)) {
       switch (code) {}
     }
@@ -51,13 +57,19 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
     );
   }
 
+  Future<void> _loadAccount() {
+    return _accountController.run(
+      const LoadAccountEvent(),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
 
     /// Assets
     _currentTransaction = widget.transaction;
-    _relayAccounts = [];
+    _relayAccounts = List.empty(growable: true);
 
     /// AccountService
     _accountController = AsyncController(const InitState());
@@ -70,8 +82,8 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
       body: CustomScrollView(
         controller: PrimaryScrollController.maybeOf(context),
         slivers: [
-          const HomeChoiceSliverAppBar(
-            cashin: false,
+          HomeChoiceSliverAppBar(
+            cashin: _currentTransaction == Transaction.cashin,
           ),
           SliverPadding(padding: kMaterialListPadding / 2),
           ControllerConsumer(
