@@ -95,9 +95,11 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
                 itemCount: _relayAccounts.length,
                 itemBuilder: (context, index) {
                   final item = _relayAccounts[index];
+
                   return HomeChoiceCard(
                     onPressed: _openAccountScreen(item),
-                    title: item.name,
+                    image: item.image,
+                    name: item.name,
                   );
                 },
               );

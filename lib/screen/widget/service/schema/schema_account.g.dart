@@ -27,13 +27,18 @@ const AccountSchema = CollectionSchema(
       name: r'id',
       type: IsarType.string,
     ),
-    r'name': PropertySchema(
+    r'image': PropertySchema(
       id: 2,
+      name: r'image',
+      type: IsarType.string,
+    ),
+    r'name': PropertySchema(
+      id: 3,
       name: r'name',
       type: IsarType.string,
     ),
     r'transaction': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'transaction',
       type: IsarType.string,
       enumMap: _AccounttransactionEnumValueMap,
@@ -60,6 +65,7 @@ int _accountEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.id.length * 3;
+  bytesCount += 3 + object.image.length * 3;
   bytesCount += 3 + object.name.length * 3;
   {
     final value = object.transaction;
@@ -78,8 +84,9 @@ void _accountSerialize(
 ) {
   writer.writeDouble(offsets[0], object.amount);
   writer.writeString(offsets[1], object.id);
-  writer.writeString(offsets[2], object.name);
-  writer.writeString(offsets[3], object.transaction?.name);
+  writer.writeString(offsets[2], object.image);
+  writer.writeString(offsets[3], object.name);
+  writer.writeString(offsets[4], object.transaction?.name);
 }
 
 Account _accountDeserialize(
@@ -91,9 +98,10 @@ Account _accountDeserialize(
   final object = Account(
     amount: reader.readDoubleOrNull(offsets[0]),
     id: reader.readString(offsets[1]),
-    name: reader.readString(offsets[2]),
+    image: reader.readString(offsets[2]),
+    name: reader.readString(offsets[3]),
     transaction:
-        _AccounttransactionValueEnumMap[reader.readStringOrNull(offsets[3])],
+        _AccounttransactionValueEnumMap[reader.readStringOrNull(offsets[4])],
   );
   return object;
 }
@@ -112,6 +120,8 @@ P _accountDeserializeProp<P>(
     case 2:
       return (reader.readString(offset)) as P;
     case 3:
+      return (reader.readString(offset)) as P;
+    case 4:
       return (_AccounttransactionValueEnumMap[reader.readStringOrNull(offset)])
           as P;
     default:
@@ -418,6 +428,136 @@ extension AccountQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'id',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Account, Account, QAfterFilterCondition> imageEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'image',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Account, Account, QAfterFilterCondition> imageGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'image',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Account, Account, QAfterFilterCondition> imageLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'image',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Account, Account, QAfterFilterCondition> imageBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'image',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Account, Account, QAfterFilterCondition> imageStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'image',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Account, Account, QAfterFilterCondition> imageEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'image',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Account, Account, QAfterFilterCondition> imageContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'image',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Account, Account, QAfterFilterCondition> imageMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'image',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Account, Account, QAfterFilterCondition> imageIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'image',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Account, Account, QAfterFilterCondition> imageIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'image',
         value: '',
       ));
     });
@@ -785,6 +925,18 @@ extension AccountQuerySortBy on QueryBuilder<Account, Account, QSortBy> {
     });
   }
 
+  QueryBuilder<Account, Account, QAfterSortBy> sortByImage() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'image', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Account, Account, QAfterSortBy> sortByImageDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'image', Sort.desc);
+    });
+  }
+
   QueryBuilder<Account, Account, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -833,6 +985,18 @@ extension AccountQuerySortThenBy
   QueryBuilder<Account, Account, QAfterSortBy> thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Account, Account, QAfterSortBy> thenByImage() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'image', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Account, Account, QAfterSortBy> thenByImageDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'image', Sort.desc);
     });
   }
 
@@ -888,6 +1052,13 @@ extension AccountQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Account, Account, QDistinct> distinctByImage(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'image', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Account, Account, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -920,6 +1091,12 @@ extension AccountQueryProperty
   QueryBuilder<Account, String, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<Account, String, QQueryOperations> imageProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'image');
     });
   }
 

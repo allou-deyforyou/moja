@@ -23,11 +23,11 @@ enum RelayAvailability {
 @Collection(inheritance: false)
 class Relay extends Equatable {
   Relay({
-    this.image,
     this.createdAt,
     required this.id,
     this.availability,
     required this.name,
+    required this.image,
     required this.location,
     required this.contacts,
   });
@@ -49,7 +49,7 @@ class Relay extends Equatable {
 
   final String id;
   final String name;
-  final String? image;
+  final String image;
   final Place? location;
   final DateTime? createdAt;
   final DateTime? availability;
@@ -145,7 +145,7 @@ class Relay extends Equatable {
     return {
       idKey: id,
       nameKey: name.json(),
-      imageKey: image?.json(),
+      imageKey: image.json(),
       locationKey: location?.toMap(),
       createdAtKey: createdAt?.toString(),
       availabilityKey: availability?.toString(),

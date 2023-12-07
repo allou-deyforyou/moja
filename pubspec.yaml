@@ -17,6 +17,7 @@ dependencies:
   go_router:
   intl:
   # Widgets
+  cached_network_image:
   listenable_tools:
   widget_tools:
   maplibre_gl:

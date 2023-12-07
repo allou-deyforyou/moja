@@ -24,6 +24,8 @@
             }
         }
     },
+    "withdrawmoney": "withdraw money",
+    "depositmoney": "deposit money",
     "amount": "amount",
     "edit": "edit",
     "menu": "menu",
@@ -42,21 +44,6 @@
     "system": "system",
     "apply": "apply",
     "cancel": "cancel",
-    "name": "name",
-    "contact": "contact",
-    "location": "location",
-    "editname": "edit name",
-    "editcontact": "edit contact",
-    "relaypointcontact": "relay point contact",
-    "flip": "flip",
-    "rotateleft": "rotate left",
-    "rotateright": "rotate right",
-    "reset": "reset",
-    "relaypointphoto": "relay point photo",
-    "editavatar": "edit photo",
-    "opencamera": "open camera",
-    "opengallery": "open gallery",
-    "relaypointaddress": "relay point address",
-    "loading": "loading",
-    "define": "define"
+    "searchpoint": "search point",
+    "loading": "loading"
 }

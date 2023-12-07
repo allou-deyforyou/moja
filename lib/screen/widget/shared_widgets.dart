@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:widget_tools/widget_tools.dart';
@@ -199,6 +200,65 @@ class CustomProgressIndicator extends StatelessWidget {
         strokeWidth: strokeWidth,
         color: color,
       ),
+    );
+  }
+}
+
+class CustomAvatarWrapper extends StatelessWidget {
+  const CustomAvatarWrapper({
+    super.key,
+    this.radius = 20.0,
+    required this.content,
+  });
+  final double radius;
+  final Widget content;
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    return SizedBox.square(
+      dimension: radius * 2,
+      child: Material(
+        shape: CircleBorder(
+          side: BorderSide(
+            color: theme.colorScheme.outlineVariant,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        color: theme.colorScheme.surfaceVariant,
+        child: content,
+      ),
+    );
+  }
+}
+
+class CustomAvatarProgressIndicator extends StatelessWidget {
+  const CustomAvatarProgressIndicator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: CustomProgressIndicator(
+        strokeWidth: 4.0,
+        radius: 35.0,
+      ),
+    );
+  }
+}
+
+class CustomAvatarWidget extends StatelessWidget {
+  const CustomAvatarWidget({
+    super.key,
+    required this.imageUrl,
+  });
+  final String? imageUrl;
+  @override
+  Widget build(BuildContext context) {
+    return CachedNetworkImage(
+      fit: BoxFit.cover,
+      imageUrl: imageUrl!,
+      placeholder: (context, url) {
+        return const CustomAvatarProgressIndicator();
+      },
     );
   }
 }

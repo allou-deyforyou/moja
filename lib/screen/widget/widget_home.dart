@@ -50,7 +50,7 @@ class HomeMenuButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: kTabLabelPadding.copyWith(top: 6.0),
+      padding: kTabLabelPadding.copyWith(top: 16.0),
       child: HomeButton(
         onPressed: onPressed,
         child: const Icon(CupertinoIcons.bars, size: 30.0),
@@ -59,100 +59,21 @@ class HomeMenuButton extends StatelessWidget {
   }
 }
 
-class HomePositionButton extends StatelessWidget {
-  const HomePositionButton({
-    super.key,
-    this.title,
-    required this.suggestionsBuilder,
-  });
-  final String? title;
-  final SuggestionsBuilder suggestionsBuilder;
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SearchAnchor(
-      viewElevation: 0.0,
-      suggestionsBuilder: suggestionsBuilder,
-      viewBackgroundColor: theme.scaffoldBackgroundColor,
-      viewHintText: MaterialLocalizations.of(context).searchFieldLabel.capitalize(),
-      viewLeading: IconButton(
-        onPressed: Navigator.of(context).pop,
-        icon: const Icon(CupertinoIcons.arrow_left),
-      ),
-      builder: (context, controller) {
-        return Padding(
-          padding: const EdgeInsets.all(8.0).copyWith(top: 6.0),
-          child: HomeButton(
-            onPressed: controller.openView,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28.0)),
-            child: IntrinsicWidth(
-              stepWidth: 60.0,
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(vertical: 6.0),
-                titleTextStyle: theme.textTheme.headlineSmall!.copyWith(
-                  color: theme.colorScheme.onSurface,
-                  fontFamily: FontFamily.avenirNext,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.0,
-                  wordSpacing: 1.0,
-                ),
-                subtitleTextStyle: theme.textTheme.titleMedium!.copyWith(
-                  fontWeight: FontWeight.w500,
-                  height: 1.6,
-                ),
-                title: Text(
-                  "Point de recherche".toUpperCase(),
-                  textAlign: TextAlign.center,
-                  softWrap: false,
-                ),
-                subtitle: SizedBox(
-                  height: 20.0,
-                  child: Visibility(
-                    visible: title != null,
-                    replacement: const Text('Chargement...'),
-                    child: Builder(
-                      builder: (context) {
-                        return DefaultTextStyle.merge(
-                          style: TextStyle(color: theme.colorScheme.primary),
-                          child: Text(
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            title!,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
 class HomeLocationButton extends StatelessWidget {
   const HomeLocationButton({
     super.key,
     this.active = false,
-    required this.onChanged,
+    required this.onPressed,
   });
   final bool active;
-  final ValueChanged<bool>? onChanged;
-
-  VoidCallback? _onPressed() {
-    if (onChanged == null) return null;
-    return () => onChanged!(!active);
-  }
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: kTabLabelPadding.copyWith(top: 6.0),
+      padding: kTabLabelPadding.copyWith(top: 16.0),
       child: HomeButton(
-        onPressed: _onPressed(),
+        onPressed: onPressed,
         child: Visibility(
           visible: active,
           replacement: const Icon(CupertinoIcons.location),
@@ -251,56 +172,159 @@ class _ProfileLocationMapState extends State<ProfileLocationMap> {
   }
 }
 
-class HomeCashInFloatingActionButton extends StatelessWidget {
-  const HomeCashInFloatingActionButton({super.key, required this.onPressed});
-  final VoidCallback? onPressed;
-  // static const color = Color.fromARGB(255, 175, 214, 255);
-  // static const darkColor = Color.fromARGB(255, 35, 54, 77);
-  static const color = Color.fromARGB(255, 175, 255, 214);
-  static const darkColor = Color.fromARGB(255, 35, 77, 54);
+class HomeLocationWidget extends StatelessWidget {
+  const HomeLocationWidget({
+    super.key,
+    this.title,
+    required this.suggestionsBuilder,
+  });
+  final String? title;
+  final SuggestionsBuilder suggestionsBuilder;
   @override
   Widget build(BuildContext context) {
-    return FloatingActionButton.extended(
-      // foregroundColor: const CupertinoDynamicColor.withBrightness(
-      //   color: darkColor,
-      //   darkColor: color,
-      // ).resolveFrom(context),
-      // backgroundColor: const CupertinoDynamicColor.withBrightness(
-      //   darkColor: darkColor,
-      //   color: color,
-      // ).resolveFrom(context),
-      extendedTextStyle: context.theme.textTheme.titleMedium!.copyWith(letterSpacing: 0.0),
-      foregroundColor: context.theme.colorScheme.onPrimary,
-      backgroundColor: context.theme.colorScheme.primary,
-      onPressed: onPressed,
-      heroTag: "depot",
-      label: const Text("Déposer de l'argent"),
+    final theme = context.theme;
+    final localizations = context.localizations;
+    final child = ListTile(
+      contentPadding: kTabLabelPadding.copyWith(right: 2.0, top: 16.0, bottom: 28.0),
+      titleTextStyle: theme.textTheme.headlineMedium!.copyWith(
+        fontFamily: FontFamily.avenirNext,
+        fontWeight: FontWeight.w600,
+      ),
+      subtitleTextStyle: theme.textTheme.titleMedium!.copyWith(
+        fontWeight: FontWeight.w500,
+        height: 1.2,
+      ),
+      leading: const Icon(CupertinoIcons.location_solid),
+      title: Text(localizations.searchpoint.toUpperCase()),
+      subtitle: SizedBox(
+        height: 35.0,
+        child: Visibility(
+          visible: title != null,
+          replacement: Text('${localizations.loading.capitalize()}...'),
+          child: Builder(
+            builder: (context) {
+              return DefaultTextStyle.merge(
+                style: TextStyle(color: theme.colorScheme.primary),
+                child: Text(title!, maxLines: 2),
+              );
+            },
+          ),
+        ),
+      ),
+      trailing: SearchAnchor(
+        viewElevation: 0.0,
+        suggestionsBuilder: suggestionsBuilder,
+        viewBackgroundColor: theme.scaffoldBackgroundColor,
+        viewHintText: MaterialLocalizations.of(context).searchFieldLabel.capitalize(),
+        viewLeading: IconButton(
+          onPressed: Navigator.of(context).pop,
+          icon: const Icon(CupertinoIcons.arrow_left),
+        ),
+        builder: (context, controller) {
+          return IconButton(
+            onPressed: controller.openView,
+            icon: const Icon(CupertinoIcons.pen),
+          );
+        },
+      ),
+    );
+    return Visibility(
+      visible: title != null,
+      replacement: Shimmer.fromColors(
+        baseColor: theme.colorScheme.onSurfaceVariant,
+        highlightColor: theme.colorScheme.onInverseSurface,
+        child: child,
+      ),
+      child: child,
     );
   }
 }
 
-class HomeCashOutFloatingActionButton extends StatelessWidget {
-  const HomeCashOutFloatingActionButton({super.key, required this.onPressed});
+class HomeCashInActionButton extends StatelessWidget {
+  const HomeCashInActionButton({
+    super.key,
+    required this.onPressed,
+  });
   final VoidCallback? onPressed;
-  static const color = Color.fromARGB(255, 255, 175, 175);
-  static const darkColor = Color.fromARGB(255, 77, 35, 35);
   @override
   Widget build(BuildContext context) {
-    return FloatingActionButton.extended(
-      // foregroundColor: const CupertinoDynamicColor.withBrightness(
-      //   color: darkColor,
-      //   darkColor: color,
-      // ).resolveFrom(context),
-      // backgroundColor: const CupertinoDynamicColor.withBrightness(
-      //   darkColor: darkColor,
-      //   color: color,
-      // ).resolveFrom(context),
-      extendedTextStyle: context.theme.textTheme.titleMedium!.copyWith(letterSpacing: 0.0),
-      foregroundColor: context.theme.colorScheme.onTertiary,
-      backgroundColor: context.theme.colorScheme.tertiary,
-      onPressed: onPressed,
-      heroTag: "retrait",
-      label: const Text("Retirer de l'argent"),
+    final theme = context.theme;
+    final localizations = context.localizations;
+    return SafeArea(
+      top: false,
+      right: false,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16.0, top: 24.0, bottom: 24.0, right: 8.0),
+        child: FilledButton.icon(
+          style: FilledButton.styleFrom(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.only(right: 4.0),
+            foregroundColor: theme.colorScheme.onSurface,
+            backgroundColor: theme.colorScheme.surfaceVariant,
+            textStyle: theme.textTheme.titleSmall!.copyWith(
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.0,
+              fontSize: 16.0,
+              height: 1.2,
+            ),
+          ),
+          onPressed: onPressed,
+          icon: Assets.images.cashin.image(
+            height: kMinInteractiveDimension,
+            width: kMinInteractiveDimension,
+          ),
+          label: Text(
+            localizations.depositmoney.capitalize(),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class HomeCashOutActionButton extends StatelessWidget {
+  const HomeCashOutActionButton({
+    super.key,
+    required this.onPressed,
+  });
+  final VoidCallback? onPressed;
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final localizations = context.localizations;
+    return SafeArea(
+      top: false,
+      left: false,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 16.0, top: 24.0, bottom: 24.0, left: 8.0),
+        child: FilledButton.icon(
+          style: FilledButton.styleFrom(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.only(right: 4.0),
+            foregroundColor: theme.colorScheme.onSurface,
+            backgroundColor: theme.colorScheme.surfaceVariant,
+            textStyle: theme.textTheme.titleSmall!.copyWith(
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.0,
+              fontSize: 16.0,
+              height: 1.2,
+            ),
+          ),
+          onPressed: onPressed,
+          icon: Transform.flip(
+            flipX: true,
+            child: Assets.images.cashout.image(
+              height: kMinInteractiveDimension,
+              width: kMinInteractiveDimension,
+            ),
+          ),
+          label: Text(
+            localizations.withdrawmoney.capitalize(),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -365,44 +389,6 @@ Future<T?> showCustomBottomSheet<T>({
   return resultController.value;
 }
 
-class HomeSelectorListTile extends StatelessWidget {
-  const HomeSelectorListTile({
-    super.key,
-    required this.onTap,
-  });
-  final VoidCallback? onTap;
-  @override
-  Widget build(BuildContext context) {
-    final theme = context.theme;
-    return IntrinsicWidth(
-      child: HomeButton(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-        onPressed: onTap,
-        child: ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text(
-            "Dépôt Orange Money",
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.2,
-              fontSize: 18.0,
-            ),
-          ),
-          subtitle: Text(
-            "10.000 f",
-            style: TextStyle(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w500,
-              letterSpacing: -0.2,
-              fontSize: 18.0,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class HomeBackButton extends StatelessWidget {
   const HomeBackButton({
     super.key,
@@ -414,236 +400,6 @@ class HomeBackButton extends StatelessWidget {
     return HomeButton(
       onPressed: onPressed ?? Navigator.of(context).pop,
       child: const Icon(CupertinoIcons.arrow_left),
-    );
-  }
-}
-
-class HomeAccountListView extends StatelessWidget {
-  const HomeAccountListView({
-    super.key,
-    this.trailing,
-    required this.itemCount,
-    required this.itemBuilder,
-  });
-  final Widget? trailing;
-  final int itemCount;
-  final NullableIndexedWidgetBuilder itemBuilder;
-  @override
-  Widget build(BuildContext context) {
-    final theme = context.theme;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: kTabLabelPadding,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              HomeBackButton(onPressed: () => CustomNavigator.pop(context)),
-              const Spacer(),
-              // if (trailing != null) trailing!,
-            ],
-          ),
-        ),
-        Flexible(
-          child: SizedBox(
-            height: 250.0,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 12.0),
-              child: Material(
-                elevation: 0.12,
-                color: theme.colorScheme.surface,
-                shadowColor: theme.colorScheme.surfaceTint,
-                surfaceTintColor: theme.colorScheme.primary,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12.0)),
-                child: Column(
-                  children: [
-                    ListTile(
-                      dense: false,
-                      contentPadding: kTabLabelPadding.copyWith(top: 12.0),
-                      title: DefaultTextStyle.merge(
-                        style: theme.textTheme.titleLarge!.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          fontFamily: FontFamily.avenirNext,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.0,
-                        ),
-                        child: const Text("DEPOT ORANGE MONEY"),
-                      ),
-                      trailing: DefaultTextStyle.merge(
-                        style: theme.textTheme.titleMedium!.copyWith(
-                          color: theme.colorScheme.primary,
-                          letterSpacing: 0.0,
-                        ),
-                        child: const Text("1.000 f"),
-                      ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 26.0),
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                          separatorBuilder: (context, index) {
-                            return const SizedBox(width: 16.0);
-                          },
-                          itemCount: itemCount,
-                          itemBuilder: itemBuilder,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class HomeAccountItemCard extends StatelessWidget {
-  const HomeAccountItemCard({
-    super.key,
-    required this.title,
-    required this.subtitle,
-    required this.onPressed,
-  });
-
-  final Widget title;
-  final Widget subtitle;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = context.theme;
-    return FilledButton.tonal(
-      onPressed: onPressed,
-      style: FilledButton.styleFrom(
-        elevation: 0.0,
-        shadowColor: theme.colorScheme.surfaceTint,
-        surfaceTintColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onSurface,
-        backgroundColor: theme.colorScheme.surfaceVariant,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-      ),
-      child: AspectRatio(
-        aspectRatio: 0.75,
-        child: Column(
-          children: [
-            Expanded(
-              child: Center(
-                child: CircleAvatar(
-                  backgroundColor: theme.colorScheme.surface,
-                  radius: 25.0,
-                  child: Icon(
-                    Icons.storefront,
-                    color: theme.colorScheme.onSurface,
-                    size: 30.0,
-                  ),
-                ),
-              ),
-            ),
-            ListTile(
-              dense: false,
-              contentPadding: EdgeInsets.zero,
-              title: DefaultTextStyle.merge(
-                style: theme.textTheme.titleMedium!.copyWith(
-                  color: theme.colorScheme.onSurface,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.0,
-                ),
-                child: title,
-              ),
-              subtitle: DefaultTextStyle.merge(
-                style: theme.textTheme.titleSmall!.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  letterSpacing: 0.0,
-                ),
-                child: subtitle,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class HomeAccountItemBottomSheet extends StatelessWidget {
-  const HomeAccountItemBottomSheet({
-    super.key,
-    this.trailing,
-    required this.child,
-  });
-  final Widget? trailing;
-  final Widget child;
-  @override
-  Widget build(BuildContext context) {
-    final theme = context.theme;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: kTabLabelPadding,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              HomeBackButton(onPressed: () => CustomNavigator.pop(context)),
-              const Spacer(),
-              // if (trailing != null) trailing!,
-            ],
-          ),
-        ),
-        Flexible(
-          child: SizedBox(
-            height: 220.0,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 12.0),
-              child: Material(
-                elevation: 0.12,
-                color: theme.colorScheme.surface,
-                shadowColor: theme.colorScheme.surfaceTint,
-                surfaceTintColor: theme.colorScheme.primary,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12.0)),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 26.0, horizontal: 16.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const AspectRatio(
-                        aspectRatio: 1.0,
-                        child: Card(color: Colors.black),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const ListTile(
-                              title: Text("Boba Pro", style: TextStyle(fontSize: 24.0)),
-                              subtitle: Text("Angré Marché"),
-                            ),
-                            const Spacer(),
-                            ListTile(
-                              leading: FilledButton(
-                                onPressed: () {},
-                                child: const Text("Appeler"),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -693,7 +449,7 @@ class HomeSliverBottomSheet extends StatelessWidget {
               SliverToBoxAdapter(
                 child: Container(
                   alignment: Alignment.centerLeft,
-                  padding: kTabLabelPadding.copyWith(bottom: 6.0),
+                  padding: kTabLabelPadding.copyWith(bottom: 16.0),
                   child: HomeBackButton(
                     onPressed: () => CustomNavigator.pop(context),
                   ),
@@ -773,15 +529,20 @@ class HomeAccountSelectedWidget extends StatelessWidget {
   const HomeAccountSelectedWidget({
     super.key,
     required this.name,
+    required this.image,
+    required this.cashin,
     required this.amount,
     required this.onTap,
   });
+  final bool cashin;
   final String name;
+  final String image;
   final double amount;
   final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
+    final localizations = context.localizations;
     return ListTile(
       dense: true,
       onTap: onTap,
@@ -789,14 +550,22 @@ class HomeAccountSelectedWidget extends StatelessWidget {
       horizontalTitleGap: 14.0,
       tileColor: theme.colorScheme.surfaceVariant,
       contentPadding: const EdgeInsets.all(8.0).copyWith(left: 4.0),
-      leading: CircleAvatar(backgroundColor: theme.colorScheme.surface),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.0)),
+      leading: CustomAvatarWrapper(
+        content: CustomAvatarWidget(
+          imageUrl: image,
+        ),
+      ),
       title: DefaultTextStyle.merge(
         style: theme.textTheme.titleMedium!.copyWith(
           fontWeight: FontWeight.w600,
           letterSpacing: 0.0,
         ),
-        child: Text(name),
+        child: Visibility(
+          visible: cashin,
+          replacement: Text(localizations.withdrawal(name).capitalize()),
+          child: Text(localizations.deposit(name).capitalize()),
+        ),
       ),
       trailing: DefaultTextStyle.merge(
         style: theme.textTheme.titleMedium!.copyWith(
@@ -812,10 +581,12 @@ class HomeAccountItemWidget extends StatelessWidget {
   const HomeAccountItemWidget({
     super.key,
     required this.name,
+    required this.image,
     required this.location,
     required this.onTap,
   });
   final String name;
+  final String image;
   final String location;
   final VoidCallback? onTap;
   @override
@@ -861,7 +632,7 @@ class HomeAccountLoadingListView extends StatelessWidget {
       padding: const EdgeInsets.all(4.0),
       child: Container(
         height: 10.0,
-        width: 80.0,
+        width: 100.0,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(12.0),
@@ -871,18 +642,16 @@ class HomeAccountLoadingListView extends StatelessWidget {
     return Shimmer.fromColors(
       baseColor: theme.colorScheme.onSurfaceVariant,
       highlightColor: theme.colorScheme.onInverseSurface,
-      child: ListView.builder(
-        itemCount: 4,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemBuilder: (context, index) {
-          return CustomListTile(
+      child: Column(
+        children: List.filled(
+          4,
+          CustomListTile(
             title: textWidget,
+            subtitle: textWidget,
             trailing: const SizedBox.shrink(),
             leading: CircleAvatar(backgroundColor: color),
-            subtitle: SizedBox(width: 100.0, child: textWidget),
-          );
-        },
+          ),
+        ),
       ),
     );
   }

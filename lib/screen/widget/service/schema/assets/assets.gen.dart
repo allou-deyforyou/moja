@@ -12,6 +12,12 @@ import 'package:flutter/widgets.dart';
 class $AssetsImagesGen {
   const $AssetsImagesGen();
 
+  /// File path: assets/images/cashin.png
+  AssetGenImage get cashin => const AssetGenImage('assets/images/cashin.png');
+
+  /// File path: assets/images/cashout.png
+  AssetGenImage get cashout => const AssetGenImage('assets/images/cashout.png');
+
   /// File path: assets/images/onboarding.jpg
   AssetGenImage get onboarding =>
       const AssetGenImage('assets/images/onboarding.jpg');
@@ -21,7 +27,7 @@ class $AssetsImagesGen {
       const AssetGenImage('assets/images/whatsapp_icon.png');
 
   /// List of all assets
-  List<AssetGenImage> get values => [onboarding, whatsappIcon];
+  List<AssetGenImage> get values => [cashin, cashout, onboarding, whatsappIcon];
 }
 
 class Assets {

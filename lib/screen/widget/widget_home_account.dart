@@ -8,9 +8,11 @@ class HomeAccountSliverAppBar extends StatelessWidget {
     super.key,
     required this.cashin,
     required this.name,
+    required this.image,
   });
   final bool cashin;
   final String name;
+  final String image;
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
@@ -21,14 +23,17 @@ class HomeAccountSliverAppBar extends StatelessWidget {
       leadingWidth: 64.0,
       toolbarHeight: 64.0,
       backgroundColor: theme.colorScheme.surface,
-      titleTextStyle: theme.textTheme.headlineSmall!.copyWith(
-        color: theme.colorScheme.onSurface,
+      titleTextStyle: theme.textTheme.headlineMedium!.copyWith(
         fontFamily: FontFamily.avenirNext,
         fontWeight: FontWeight.w600,
-        letterSpacing: 0.0,
-        wordSpacing: 1.0,
       ),
-      leading: const Center(child: CircleAvatar()),
+      leading: Center(
+        child: CustomAvatarWrapper(
+          content: CustomAvatarWidget(
+            imageUrl: image,
+          ),
+        ),
+      ),
       title: Visibility(
         visible: cashin,
         replacement: Text(localizations.withdrawal(name).toUpperCase()),

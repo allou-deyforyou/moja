@@ -94,12 +94,7 @@ int _relayEstimateSize(
     }
   }
   bytesCount += 3 + object.id.length * 3;
-  {
-    final value = object.image;
-    if (value != null) {
-      bytesCount += 3 + value.length * 3;
-    }
-  }
+  bytesCount += 3 + object.image.length * 3;
   {
     final value = object.location;
     if (value != null) {
@@ -142,7 +137,7 @@ Relay _relayDeserialize(
     contacts: reader.readStringList(offsets[1]),
     createdAt: reader.readDateTimeOrNull(offsets[2]),
     id: reader.readString(offsets[3]),
-    image: reader.readStringOrNull(offsets[4]),
+    image: reader.readString(offsets[4]),
     location: reader.readObjectOrNull<Place>(
       offsets[5],
       PlaceSchema.deserialize,
@@ -169,7 +164,7 @@ P _relayDeserializeProp<P>(
     case 3:
       return (reader.readString(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 5:
       return (reader.readObjectOrNull<Place>(
         offset,
@@ -768,24 +763,8 @@ extension RelayQueryFilter on QueryBuilder<Relay, Relay, QFilterCondition> {
     });
   }
 
-  QueryBuilder<Relay, Relay, QAfterFilterCondition> imageIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'image',
-      ));
-    });
-  }
-
-  QueryBuilder<Relay, Relay, QAfterFilterCondition> imageIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'image',
-      ));
-    });
-  }
-
   QueryBuilder<Relay, Relay, QAfterFilterCondition> imageEqualTo(
-    String? value, {
+    String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -798,7 +777,7 @@ extension RelayQueryFilter on QueryBuilder<Relay, Relay, QFilterCondition> {
   }
 
   QueryBuilder<Relay, Relay, QAfterFilterCondition> imageGreaterThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -813,7 +792,7 @@ extension RelayQueryFilter on QueryBuilder<Relay, Relay, QFilterCondition> {
   }
 
   QueryBuilder<Relay, Relay, QAfterFilterCondition> imageLessThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -828,8 +807,8 @@ extension RelayQueryFilter on QueryBuilder<Relay, Relay, QFilterCondition> {
   }
 
   QueryBuilder<Relay, Relay, QAfterFilterCondition> imageBetween(
-    String? lower,
-    String? upper, {
+    String lower,
+    String upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -1384,7 +1363,7 @@ extension RelayQueryProperty on QueryBuilder<Relay, Relay, QQueryProperty> {
     });
   }
 
-  QueryBuilder<Relay, String?, QQueryOperations> imageProperty() {
+  QueryBuilder<Relay, String, QQueryOperations> imageProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'image');
     });

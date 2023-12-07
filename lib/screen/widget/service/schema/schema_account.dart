@@ -17,14 +17,16 @@ class Account extends Equatable {
   const Account({
     required this.id,
     required this.name,
-    this.amount,
+    required this.image,
     this.transaction,
+    this.amount,
   });
 
   static const String schema = 'account';
 
   static const String idKey = 'id';
   static const String nameKey = 'name';
+  static const String imageKey = 'image';
   static const String amountKey = 'balance';
   static const String transactionKey = 'transaction';
 
@@ -32,6 +34,7 @@ class Account extends Equatable {
 
   final String id;
   final String name;
+  final String image;
   final double? amount;
   @Enumerated(EnumType.name)
   final Transaction? transaction;
@@ -48,6 +51,7 @@ class Account extends Equatable {
       id,
       name,
       amount,
+      image,
       transaction,
     ];
   }
@@ -55,12 +59,14 @@ class Account extends Equatable {
   Account copyWith({
     String? id,
     String? name,
+    String? image,
     double? amount,
     Transaction? transaction,
   }) {
     return Account(
       id: id ?? this.id,
       name: name ?? this.name,
+      image: image ?? this.image,
       amount: amount ?? this.amount,
       transaction: transaction ?? this.transaction,
     );
@@ -70,6 +76,7 @@ class Account extends Equatable {
     return copyWith(
       id: id,
       name: name,
+      image: image,
       amount: amount,
       transaction: transaction,
     );
@@ -80,6 +87,7 @@ class Account extends Equatable {
     return Account(
       id: data[idKey],
       name: data[nameKey],
+      image: data[imageKey],
     );
   }
 
@@ -87,6 +95,7 @@ class Account extends Equatable {
     return {
       idKey: id,
       nameKey: name,
+      imageKey: image,
       amountKey: amount,
       transactionKey: transaction,
     }..removeWhere((key, value) => value == null);
@@ -95,6 +104,7 @@ class Account extends Equatable {
   Map<String, dynamic> toSurreal() {
     return {
       idKey: id,
+      imageKey: image,
       amountKey: amount,
       nameKey: name.json(),
       transactionKey: transaction,

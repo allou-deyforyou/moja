@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:listenable_tools/listenable_tools.dart';
@@ -15,14 +16,28 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   /// Assets
   late final BuildContext _scaffoldContext;
   late ValueNotifier<bool> _myLocationController;
   Account? _currentAccount;
 
-  Future<Iterable<Widget>> _suggestionsBuilder(BuildContext context, SearchController controller) async {
-    return [];
+  late AnimationController _pinAnimationController;
+
+  void _animatePin() {
+    _pinAnimationController.repeat(min: 0.15, max: 1.0);
+  }
+
+  void _resetPin() {
+    _pinAnimationController.reset();
+  }
+
+  LatLng? _placeToLatLng(Place? place) {
+    if (place == null) return null;
+    return LatLng(
+      place.position!.coordinates![1],
+      place.position!.coordinates![0],
+    );
   }
 
   void _pushMenuSheet() async {
@@ -64,15 +79,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _afterLayout(BuildContext context) {
     _scaffoldContext = context;
-    _showFloatingActionButton();
+    _showLocationWidget();
   }
 
   /// MapLibre
   MaplibreMapController? _mapController;
   UserLocation? _userLocation;
 
-  void _onMapCreated(MaplibreMapController controller) {
+  void _onMapCreated(MaplibreMapController controller) async {
     _mapController = controller;
+
+    double bottom = context.mediaQuery.padding.bottom;
+    await _mapController!.updateContentInsets(EdgeInsets.only(
+      bottom: bottom + kBottomNavigationBarHeight * 3,
+      right: 16.0,
+      left: 16.0,
+    ));
+
     _goToMyPosition();
   }
 
@@ -87,10 +110,11 @@ class _HomeScreenState extends State<HomeScreen> {
     _userLocation = location;
   }
 
-  void _goToPosition(LatLng position, {double zoom = 18.0}) {
+  void _goToPosition(LatLng position, {double zoom = 16.0}) {
     _mapController?.animateCamera(
       CameraUpdate.newCameraPosition(CameraPosition(
         target: position,
+        tilt: 60.0,
         zoom: zoom,
       )),
     );
@@ -100,7 +124,30 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_userLocation != null) {
       _myLocationController.value = true;
       _goToPosition(_userLocation!.position);
+      _searchPlaceByPoint(_userLocation!.position);
     }
+  }
+
+  /// PlaceService
+  late AsyncController<AsyncState> _placeController;
+  Place? _currentPlace;
+
+  void _listenPlaceState(BuildContext context, AsyncState state) {
+    if (state is PendingState) {
+      return _animatePin();
+    } else if (state case SuccessState<Place>(:final data)) {
+      _currentPlace = data;
+      _goToPosition(_placeToLatLng(_currentPlace)!);
+    }
+    return _resetPin();
+  }
+
+  void _searchPlaceByPoint([LatLng? center]) {
+    center ??= _mapController!.cameraPosition!.target;
+    _placeController.run(SearchPlaceEvent(position: (
+      center.longitude,
+      center.latitude,
+    )));
   }
 
   /// RelayService
@@ -124,6 +171,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     /// Assets
     _myLocationController = ValueNotifier(false);
+    _pinAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 3000),
+      vsync: this,
+    );
+
+    /// PlaceService
+    _placeController = AsyncController(const InitState());
 
     /// RelayService
     _relayController = AsyncController(const InitState());
@@ -134,10 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final data = await showCustomBottomSheet(
         context: _scaffoldContext,
         builder: (context) {
-          return HomeAccountItemBottomSheet(
-            trailing: HomeSelectorListTile(onTap: _openAccountScreen),
-            child: const SizedBox.shrink(),
-          );
+          return const HomeAccountBottomSheet();
         },
       );
       if (data != null) {
@@ -151,14 +202,17 @@ class _HomeScreenState extends State<HomeScreen> {
     final data = await showCustomBottomSheet(
       context: _scaffoldContext,
       builder: (context) {
+        final cashin = _currentAccount!.transaction == Transaction.cashin;
         return HomeSliverBottomSheet(
           slivers: [
             HomeAccountAppBar(
-              cashin: _currentAccount!.transaction == Transaction.cashin,
+              cashin: cashin,
               bottom: HomeAccountSelectedWidget(
-                amount: _currentAccount!.amount!,
-                name: _currentAccount!.name,
                 onTap: _openAccountScreen,
+                amount: _currentAccount!.amount!,
+                image: _currentAccount!.image,
+                name: _currentAccount!.name,
+                cashin: cashin,
               ),
             ),
             SliverPadding(padding: kMaterialListPadding / 2),
@@ -168,6 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context, state, child) {
                 return switch (state) {
                   PendingState() => const SliverFillRemaining(
+                      hasScrollBody: false,
                       child: HomeAccountLoadingListView(),
                     ),
                   SuccessState<List<Relay>>(:final data) => SliverVisibility(
@@ -182,6 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           return HomeAccountItemWidget(
                             onTap: _openRelaySheet(item),
                             location: item.location!.title,
+                            image: item.image,
                             name: item.name,
                           );
                         },
@@ -197,32 +253,48 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     if (data != null) {
     } else {
-      _showFloatingActionButton();
+      _showLocationWidget();
     }
   }
 
-  void _showFloatingActionButton() async {
+  void _showLocationWidget() async {
     final data = await showCustomBottomSheet(
       context: _scaffoldContext,
       builder: (context) {
-        return SafeArea(
-          top: false,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                HomeCashInFloatingActionButton(
-                  onPressed: _pushCashInSheet,
-                ),
-                const Padding(padding: kMaterialListPadding),
-                HomeCashOutFloatingActionButton(
-                  onPressed: _pushCashOutSheet,
-                ),
-              ],
-            ),
+        return HomeBottomSheetBackground(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ControllerConsumer(
+                listener: _listenPlaceState,
+                controller: _placeController,
+                builder: (context, state, child) {
+                  return HomeLocationWidget(
+                    suggestionsBuilder: _suggestionsBuilder,
+                    title: switch (state) {
+                      SuccessState<Place>(:final data) => data.title,
+                      _ => null,
+                    },
+                  );
+                },
+              ),
+              const Divider(),
+              Row(
+                children: [
+                  Expanded(
+                    child: HomeCashInActionButton(
+                      onPressed: _pushCashInSheet,
+                    ),
+                  ),
+                  Expanded(
+                    child: HomeCashOutActionButton(
+                      onPressed: _pushCashOutSheet,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         );
       },
@@ -230,8 +302,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (data != null) {
     } else {
-      _showFloatingActionButton();
+      _showLocationWidget();
     }
+  }
+
+  Future<Iterable<Widget>> _suggestionsBuilder(BuildContext context, SearchController controller) async {
+    if (_userLocation != null) {
+      final position = _userLocation!.position;
+      final data = searchPlaceByQuery(query: controller.text, position: (
+        position.longitude,
+        position.latitude,
+      ));
+      return data.then((places) {
+        return places.map((item) {
+          return ListTile(
+            onTap: () {
+              _placeController.value = SuccessState(item);
+              Navigator.pop(context);
+            },
+            leading: const Icon(CupertinoIcons.location_solid),
+            subtitle: Text(item.subtitle),
+            title: Text(item.title),
+          );
+        });
+      });
+    }
+    return [];
   }
 
   @override
@@ -246,17 +342,11 @@ class _HomeScreenState extends State<HomeScreen> {
           HomeMenuButton(
             onPressed: _pushMenuSheet,
           ),
-          Flexible(
-            child: HomePositionButton(
-              suggestionsBuilder: _suggestionsBuilder,
-              title: "Koumassi Mairie",
-            ),
-          ),
           ValueListenableBuilder(
             valueListenable: _myLocationController,
             builder: (context, active, child) {
               return HomeLocationButton(
-                onChanged: (value) => _goToMyPosition(),
+                onPressed: _goToMyPosition,
                 active: active,
               );
             },

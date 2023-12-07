@@ -48,6 +48,7 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
         slivers: [
           HomeAccountSliverAppBar(
             cashin: _currentAccount.transaction == Transaction.cashin,
+            image: _currentAccount.image,
             name: _currentAccount.name,
           ),
           SliverToBoxAdapter(

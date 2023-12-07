@@ -20,17 +20,14 @@ class HomeChoiceSliverAppBar extends StatelessWidget {
       toolbarHeight: 64.0,
       automaticallyImplyLeading: false,
       backgroundColor: theme.colorScheme.surface,
-      titleTextStyle: theme.textTheme.headlineSmall!.copyWith(
-        color: theme.colorScheme.onSurface,
+      titleTextStyle: theme.textTheme.headlineMedium!.copyWith(
         fontFamily: FontFamily.avenirNext,
         fontWeight: FontWeight.w600,
-        letterSpacing: 0.0,
-        wordSpacing: 1.0,
       ),
       title: Visibility(
         visible: cashin,
-        replacement: Text(localizations.searchwithdrawalpoints.toUpperCase()),
-        child: Text(localizations.searchdepositpoints.toUpperCase()),
+        replacement: Text(localizations.withdrawmoney.toUpperCase()),
+        child: Text(localizations.depositmoney.toUpperCase()),
       ),
       actions: const [CustomCloseButton()],
     );
@@ -41,17 +38,23 @@ class HomeChoiceCard extends StatelessWidget {
   const HomeChoiceCard({
     super.key,
     this.onPressed,
-    required this.title,
+    required this.name,
+    required this.image,
   });
-  final String title;
+  final String name;
+  final String image;
   final VoidCallback? onPressed;
   @override
   Widget build(BuildContext context) {
     return CustomListTile(
       onTap: onPressed,
       contentPadding: kTabLabelPadding.copyWith(top: 16.0, bottom: 16.0),
-      leading: const CircleAvatar(backgroundColor: Colors.black),
-      title: Text(title),
+      leading: CustomAvatarWrapper(
+        content: CustomAvatarWidget(
+          imageUrl: image,
+        ),
+      ),
+      title: Text(name),
       trailing: const Icon(CupertinoIcons.right_chevron, size: 14.0),
     );
   }
