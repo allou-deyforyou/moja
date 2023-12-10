@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:widget_tools/widget_tools.dart';
 
 import '_widget.dart';
@@ -31,10 +31,10 @@ class HomeButton extends StatelessWidget {
       style: FilledButton.styleFrom(
         shape: shape,
         elevation: 0.12,
-        shadowColor: theme.colorScheme.surfaceTint,
         backgroundColor: theme.colorScheme.surface,
         surfaceTintColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onSurface,
+        shadowColor: theme.colorScheme.surfaceVariant,
       ),
       child: child,
     );

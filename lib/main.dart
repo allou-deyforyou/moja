@@ -79,7 +79,8 @@ class _MyAppState extends State<MyApp> {
                 final data = state.extra as Map<String, dynamic>;
                 return DialogPage<Account>(
                   child: HomeChoiceScreen(
-                    transaction: data[HomeChoiceScreen.transactionKey],
+                    currentPosition: data[HomeChoiceScreen.currentPositionKey],
+                    transaction: data[HomeChoiceScreen.currentTransactionKey],
                   ),
                 );
               },

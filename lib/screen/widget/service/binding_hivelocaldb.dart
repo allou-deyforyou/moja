@@ -81,7 +81,7 @@ class HiveLocalDB {
   static Future<void> development() async {
     await Hive.initFlutter();
     _settingsBox = await Hive.openBox(
-      collection: 'development',
+      collection: '/development',
       _settingsBoxKey,
     );
   }
@@ -89,7 +89,7 @@ class HiveLocalDB {
   static Future<void> production() async {
     await Hive.initFlutter();
     _settingsBox = await Hive.openBox(
-      collection: 'production',
+      collection: '/production',
       _settingsBoxKey,
     );
   }

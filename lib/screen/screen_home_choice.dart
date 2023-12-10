@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:listenable_tools/listenable_tools.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '_screen.dart';
 
@@ -8,18 +9,23 @@ class HomeChoiceScreen extends StatefulWidget {
   const HomeChoiceScreen({
     super.key,
     required this.transaction,
+    required this.currentPosition,
   });
+  final LatLng currentPosition;
   final Transaction transaction;
   static const name = 'home-choice';
   static const path = 'choice';
-  static const transactionKey = 'transaction';
+  static const currentPositionKey = 'currentPosition';
+  static const currentTransactionKey = 'currentTransaction';
   @override
   State<HomeChoiceScreen> createState() => _HomeChoiceScreenState();
 }
 
 class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
   /// Assets
+  late final LatLng _currentPosition;
   late final Transaction _currentTransaction;
+
   late List<Account> _relayAccounts;
 
   VoidCallback _openAccountScreen(Account account) {
@@ -53,7 +59,10 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
 
   Future<void> _selectAccount() {
     return _accountController.run(
-      const SelectAccountEvent(),
+      SelectAccountEvent(position: (
+        longitude: _currentPosition.longitude,
+        latitude: _currentPosition.latitude,
+      )),
     );
   }
 
@@ -69,6 +78,7 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
 
     /// Assets
     _currentTransaction = widget.transaction;
+    _currentPosition = widget.currentPosition;
     _relayAccounts = List.empty(growable: true);
 
     /// AccountService

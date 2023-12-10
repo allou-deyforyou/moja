@@ -18,11 +18,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   /// Assets
+  Account? _currentAccount;
   late final BuildContext _scaffoldContext;
   late ValueNotifier<bool> _myLocationController;
-  Account? _currentAccount;
-
   late AnimationController _pinAnimationController;
+
+  void _afterLayout(BuildContext context) {
+    _scaffoldContext = context;
+    _showLocationWidget();
+  }
 
   void _animatePin() {
     _pinAnimationController.repeat(min: 0.15, max: 1.0);
@@ -40,57 +44,57 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  void _pushMenuSheet() async {
+  void _openMenuScreen() {
     context.pushNamed(HomeMenuScreen.name);
   }
 
-  void _pushCashInSheet() async {
-    final data = await context.pushNamed<Account>(HomeChoiceScreen.name, extra: {
-      HomeChoiceScreen.transactionKey: Transaction.cashin,
-    });
-    if (data != null) {
-      _currentAccount = data;
-      _selectRelay();
-      _openAccountListView();
-    }
-  }
-
-  void _pushCashOutSheet() async {
-    final data = await context.pushNamed<Account>(HomeChoiceScreen.name, extra: {
-      HomeChoiceScreen.transactionKey: Transaction.cashout,
-    });
-    if (data != null) {
-      _currentAccount = data;
-      _selectRelay();
-      _openAccountListView();
-    }
+  VoidCallback _openChoiceScreen(Transaction transaction) {
+    return () async {
+      final data = await context.pushNamed<Account>(
+        extra: {
+          HomeChoiceScreen.currentPositionKey: _centerPosition,
+          HomeChoiceScreen.currentTransactionKey: transaction,
+        },
+        HomeChoiceScreen.name,
+      );
+      if (data != null) {
+        _currentAccount = data;
+        _selectRelay();
+        _openAccountListView();
+      }
+    };
   }
 
   void _openAccountScreen() async {
-    final data = await context.pushNamed<Account>(HomeAccountScreen.name, extra: {
-      HomeAccountScreen.accountKey: _currentAccount,
-    });
+    final data = await context.pushNamed<Account>(
+      extra: {HomeAccountScreen.accountKey: _currentAccount},
+      HomeAccountScreen.name,
+    );
     if (data != null) {
       _currentAccount = data;
       _selectRelay();
       _openAccountListView();
     }
-  }
-
-  void _afterLayout(BuildContext context) {
-    _scaffoldContext = context;
-    _showLocationWidget();
   }
 
   /// MapLibre
   MaplibreMapController? _mapController;
   UserLocation? _userLocation;
+  LatLng? _centerPosition;
 
   void _onMapCreated(MaplibreMapController controller) async {
     _mapController = controller;
+    await _onStyleLoadedCallback();
+  }
 
+  void _onMapIdle() {
+    _myLocationController.value = false;
+    _centerPosition = _mapController!.cameraPosition!.target;
+  }
+
+  Future<void> _onStyleLoadedCallback() async {
     double bottom = context.mediaQuery.padding.bottom;
-    await _mapController!.updateContentInsets(EdgeInsets.only(
+    await _mapController?.updateContentInsets(EdgeInsets.only(
       bottom: bottom + kBottomNavigationBarHeight * 3,
       right: 16.0,
       left: 16.0,
@@ -99,21 +103,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _goToMyPosition();
   }
 
-  void _onMapIdle() {
-    _myLocationController.value = false;
-  }
-
-  void _onMapMoved() {}
-
   void _onUserLocationUpdated(UserLocation location) {
     if (_myLocationController.value) _goToPosition(location.position);
     _userLocation = location;
   }
 
-  void _goToPosition(LatLng position, {double zoom = 16.0}) {
-    _mapController?.animateCamera(
+  void _goToPosition(
+    LatLng position, {
+    double zoom = 16.0,
+    double bearing = 0.0,
+  }) {
+    if (_mapController == null) return;
+
+    _mapController!.animateCamera(
       CameraUpdate.newCameraPosition(CameraPosition(
         target: position,
+        bearing: bearing,
         tilt: 60.0,
         zoom: zoom,
       )),
@@ -121,11 +126,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   void _goToMyPosition() async {
-    if (_userLocation != null) {
-      _myLocationController.value = true;
-      _goToPosition(_userLocation!.position);
-      _searchPlaceByPoint(_userLocation!.position);
-    }
+    if (_userLocation == null) return;
+
+    _myLocationController.value = true;
+
+    _centerPosition = _userLocation!.position;
+    final heading = _userLocation!.heading?.trueHeading;
+
+    _searchPlace(_centerPosition!);
+
+    _goToPosition(_centerPosition!, bearing: heading ?? 0.0);
   }
 
   /// PlaceService
@@ -142,11 +152,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return _resetPin();
   }
 
-  void _searchPlaceByPoint([LatLng? center]) {
-    center ??= _mapController!.cameraPosition!.target;
+  void _searchPlace(LatLng position) {
     _placeController.run(SearchPlaceEvent(position: (
-      center.longitude,
-      center.latitude,
+      longitude: position.longitude,
+      latitude: position.latitude,
     )));
   }
 
@@ -170,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     super.initState();
 
     /// Assets
-    _myLocationController = ValueNotifier(false);
+    _myLocationController = ValueNotifier(true);
     _pinAnimationController = AnimationController(
       duration: const Duration(milliseconds: 3000),
       vsync: this,
@@ -283,13 +292,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               Row(
                 children: [
                   Expanded(
-                    child: HomeCashInActionButton(
-                      onPressed: _pushCashInSheet,
-                    ),
+                    child: Builder(builder: (context) {
+                      return HomeCashInActionButton(
+                        onPressed: _openChoiceScreen(Transaction.cashin),
+                      );
+                    }),
                   ),
                   Expanded(
                     child: HomeCashOutActionButton(
-                      onPressed: _pushCashOutSheet,
+                      onPressed: _openChoiceScreen(Transaction.cashout),
                     ),
                   ),
                 ],
@@ -307,27 +318,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Future<Iterable<Widget>> _suggestionsBuilder(BuildContext context, SearchController controller) async {
-    if (_userLocation != null) {
-      final position = _userLocation!.position;
-      final data = searchPlaceByQuery(query: controller.text, position: (
-        position.longitude,
-        position.latitude,
-      ));
-      return data.then((places) {
-        return places.map((item) {
-          return ListTile(
-            onTap: () {
-              _placeController.value = SuccessState(item);
-              Navigator.pop(context);
-            },
-            leading: const Icon(CupertinoIcons.location_solid),
-            subtitle: Text(item.subtitle),
-            title: Text(item.title),
-          );
-        });
+    if (_userLocation == null) return const [];
+
+    final position = _userLocation!.position;
+    final data = searchPlace(query: controller.text, position: (
+      longitude: position.longitude,
+      latitude: position.latitude,
+    ));
+    return data.then((places) {
+      return places.map((item) {
+        return ListTile(
+          onTap: () {
+            _placeController.value = SuccessState(item);
+            Navigator.pop(context);
+          },
+          leading: const Icon(CupertinoIcons.location_solid),
+          subtitle: Text(item.subtitle),
+          title: Text(item.title),
+        );
       });
-    }
-    return [];
+    });
   }
 
   @override
@@ -340,7 +350,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           HomeMenuButton(
-            onPressed: _pushMenuSheet,
+            onPressed: _openMenuScreen,
           ),
           ValueListenableBuilder(
             valueListenable: _myLocationController,
@@ -357,8 +367,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         afterLayout: _afterLayout,
         child: ProfileLocationMap(
           onMapIdle: _onMapIdle,
-          onMapMoved: _onMapMoved,
           onMapCreated: _onMapCreated,
+          onStyleLoadedCallback: _onStyleLoadedCallback,
           onUserLocationUpdated: _onUserLocationUpdated,
         ),
       ),

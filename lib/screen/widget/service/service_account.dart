@@ -6,13 +6,19 @@ import 'package:listenable_tools/async.dart';
 import '_service.dart';
 
 class SelectAccountEvent extends AsyncEvent<AsyncState> {
-  const SelectAccountEvent();
+  const SelectAccountEvent({
+    required this.position,
+  });
+
+  final ({double longitude, double latitude}) position;
+
   @override
   Future<void> handle(AsyncEmitter<AsyncState> emit) async {
     try {
       emit(const PendingState());
-
-      final responses = await sql('SELECT * FROM ${Account.schema} WHERE cash=NONE');
+ 
+      final countryFilter = '->localed->(country WHERE (${position.longitude}, ${position.latitude}) INSIDE boundary)';
+      final responses = await sql('SELECT *, ->localed->country.currency as currency FROM ${Account.schema} WHERE cash=NONE AND $countryFilter;');
 
       final List response = responses.first;
       final data = List.of(response.map((data) => Account.fromMap(data)!));
