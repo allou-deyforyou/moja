@@ -1,10 +1,11 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:listenable_tools/listenable_tools.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
-import 'package:moja/screen/widget/service/service_relay.dart';
 import 'package:widget_tools/widget_tools.dart';
+import 'package:listenable_tools/listenable_tools.dart';
+import 'package:moja/screen/widget/service/service_relay.dart';
 
 import '_screen.dart';
 
@@ -87,20 +88,32 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     await _onStyleLoadedCallback();
   }
 
+  Future<void> _onStyleLoadedCallback() async {
+    double bottom = context.mediaQuery.padding.bottom;
+
+    await Future.wait([
+      _mapController!.updateContentInsets(EdgeInsets.only(
+        bottom: bottom + kBottomNavigationBarHeight * 3,
+        right: 16.0,
+        left: 16.0,
+      )),
+      _loadImages(),
+    ]);
+
+    _goToMyPosition();
+  }
+
+  Future<void> _loadImages() async {
+    final pintData = await rootBundle.load(Assets.images.pin2.path);
+    await _mapController!.addImage(
+      Assets.images.pin2.keyName,
+      pintData.buffer.asUint8List(),
+    );
+  }
+
   void _onMapIdle() {
     _myLocationController.value = false;
     _centerPosition = _mapController!.cameraPosition!.target;
-  }
-
-  Future<void> _onStyleLoadedCallback() async {
-    double bottom = context.mediaQuery.padding.bottom;
-    await _mapController?.updateContentInsets(EdgeInsets.only(
-      bottom: bottom + kBottomNavigationBarHeight * 3,
-      right: 16.0,
-      left: 16.0,
-    ));
-
-    _goToMyPosition();
   }
 
   void _onUserLocationUpdated(UserLocation location) {
@@ -218,6 +231,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               cashin: cashin,
               bottom: HomeAccountSelectedWidget(
                 onTap: _openAccountScreen,
+                currency: _currentAccount?.country.value?.currency,
                 amount: _currentAccount!.amount!,
                 image: _currentAccount!.image,
                 name: _currentAccount!.name,

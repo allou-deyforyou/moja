@@ -68,7 +68,7 @@ const RelaySchema = CollectionSchema(
       single: false,
     )
   },
-  embeddedSchemas: {r'Place': PlaceSchema, r'Geometry': GeometrySchema},
+  embeddedSchemas: {r'Place': PlaceSchema, r'Point': PointSchema},
   getId: _relayGetId,
   getLinks: _relayGetLinks,
   attach: _relayAttach,

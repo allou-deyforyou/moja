@@ -36,7 +36,12 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
 
     /// Assets
     _currentAccount = widget.account;
-    _amountTextController = TextEditingController();
+    final amount = _currentAccount.amount?.formatted;
+    _amountTextController = TextEditingController(text: amount);
+    _amountTextController.selection = TextSelection(
+      extentOffset: amount?.length ?? 0,
+      baseOffset: 0,
+    );
   }
 
   @override
@@ -53,6 +58,7 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
           ),
           SliverToBoxAdapter(
             child: HomeAccountAmountTextField(
+              currency: _currentAccount.country.value?.currency,
               controller: _amountTextController,
             ),
           ),

@@ -18,16 +18,37 @@ class $AssetsImagesGen {
   /// File path: assets/images/cashout.png
   AssetGenImage get cashout => const AssetGenImage('assets/images/cashout.png');
 
+  /// File path: assets/images/mylocation.zip
+  String get mylocation => 'assets/images/mylocation.zip';
+
+  /// File path: assets/images/mylocation2.zip
+  String get mylocation2 => 'assets/images/mylocation2.zip';
+
   /// File path: assets/images/onboarding.jpg
   AssetGenImage get onboarding =>
       const AssetGenImage('assets/images/onboarding.jpg');
+
+  /// File path: assets/images/pin.gif
+  AssetGenImage get pin => const AssetGenImage('assets/images/pin.gif');
+
+  /// File path: assets/images/pin2.gif
+  AssetGenImage get pin2 => const AssetGenImage('assets/images/pin2.gif');
 
   /// File path: assets/images/whatsapp_icon.png
   AssetGenImage get whatsappIcon =>
       const AssetGenImage('assets/images/whatsapp_icon.png');
 
   /// List of all assets
-  List<AssetGenImage> get values => [cashin, cashout, onboarding, whatsappIcon];
+  List<dynamic> get values => [
+        cashin,
+        cashout,
+        mylocation,
+        mylocation2,
+        onboarding,
+        pin,
+        pin2,
+        whatsappIcon
+      ];
 }
 
 class Assets {

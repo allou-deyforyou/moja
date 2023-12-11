@@ -5,16 +5,16 @@ import 'package:isar/isar.dart';
 
 import '_schema.dart';
 
-part 'schema_geometry.g.dart';
+part 'schema_point.g.dart';
 
 @Embedded(inheritance: false)
-class Geometry extends Equatable {
-  const Geometry({
+class Point extends Equatable {
+  const Point({
     this.type,
     this.coordinates,
   });
 
-  static const String schema = 'geometry';
+  static const String schema = 'Point';
 
   static const String typeKey = 'type';
   static const String coordinatesKey = 'coordinates';
@@ -36,25 +36,25 @@ class Geometry extends Equatable {
     ];
   }
 
-  Geometry copyWith({
+  Point copyWith({
     String? type,
     List<double>? coordinates,
   }) {
-    return Geometry(
+    return Point(
       type: type ?? this.type,
       coordinates: coordinates ?? this.coordinates,
     );
   }
 
-  Geometry clone() {
+  Point clone() {
     return copyWith(
       type: type,
       coordinates: coordinates,
     );
   }
 
-  static Geometry fromMap(dynamic data) {
-    return Geometry(
+  static Point fromMap(dynamic data) {
+    return Point(
       type: data[typeKey],
       coordinates: data[coordinatesKey].cast<double>(),
     );
@@ -74,7 +74,7 @@ class Geometry extends Equatable {
     }..removeWhere((key, value) => value == null);
   }
 
-  static Geometry fromJson(String source) {
+  static Point fromJson(String source) {
     return fromMap(jsonDecode(source));
   }
 

@@ -12,7 +12,7 @@ class IsarLocalDB {
   static Future<void> development() async {
     final dir = await getApplicationDocumentsDirectory();
     _isar = await Isar.open(
-      [RelaySchema, AccountSchema],
+      [RelaySchema, AccountSchema, CountrySchema],
       directory: dir.path,
       name: 'development',
     );
@@ -21,7 +21,7 @@ class IsarLocalDB {
   static Future<void> production() async {
     final dir = await getApplicationDocumentsDirectory();
     _isar = await Isar.open(
-      [RelaySchema, AccountSchema],
+      [RelaySchema, AccountSchema, CountrySchema],
       directory: dir.path,
       name: 'production',
     );

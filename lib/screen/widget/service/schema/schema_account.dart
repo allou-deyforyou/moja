@@ -14,7 +14,7 @@ enum Transaction {
 
 @Collection(inheritance: false)
 class Account extends Equatable {
-  const Account({
+  Account({
     required this.id,
     required this.name,
     required this.image,
@@ -30,6 +30,9 @@ class Account extends Equatable {
   static const String amountKey = 'balance';
   static const String transactionKey = 'transaction';
 
+  /// Edges
+  static const String countryKey = 'countries';
+
   Id get isarId => id.fastHash;
 
   final String id;
@@ -38,6 +41,9 @@ class Account extends Equatable {
   final double? amount;
   @Enumerated(EnumType.name)
   final Transaction? transaction;
+
+  /// Edges
+  final country = IsarLink<Country>();
 
   @override
   String toString() {
@@ -62,6 +68,7 @@ class Account extends Equatable {
     String? image,
     double? amount,
     Transaction? transaction,
+    Country? country,
   }) {
     return Account(
       id: id ?? this.id,
@@ -69,7 +76,10 @@ class Account extends Equatable {
       image: image ?? this.image,
       amount: amount ?? this.amount,
       transaction: transaction ?? this.transaction,
-    );
+    )
+
+      /// Edges
+      ..country.value = country ?? this.country.value;
   }
 
   Account clone() {
@@ -79,6 +89,7 @@ class Account extends Equatable {
       image: image,
       amount: amount,
       transaction: transaction,
+      country: country.value,
     );
   }
 
@@ -88,7 +99,10 @@ class Account extends Equatable {
       id: data[idKey],
       name: data[nameKey],
       image: data[imageKey],
-    );
+    )
+
+      /// Edges
+      ..country.value = List.of((data[countryKey] ?? []).map<Country>((item) => Country.fromMap(item)!)).firstOrNull;
   }
 
   Map<String, dynamic> toMap() {

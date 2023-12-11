@@ -48,7 +48,9 @@ class HomeAccountAmountTextField extends StatelessWidget {
   const HomeAccountAmountTextField({
     super.key,
     this.controller,
+    this.currency,
   });
+  final String? currency;
   final TextEditingController? controller;
   @override
   Widget build(BuildContext context) {
@@ -80,7 +82,7 @@ class HomeAccountAmountTextField extends StatelessWidget {
             border: InputBorder.none,
             hintText: localizations.amount,
             focusedBorder: InputBorder.none,
-            suffixIcon: const Text("francs"),
+            suffixIcon: Text(currency ?? "F"),
           ),
         ),
       ),

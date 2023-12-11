@@ -32,7 +32,7 @@ class Place extends Equatable {
   final String? state;
   final String? country;
   final String? locality;
-  final Geometry? position;
+  final Point? position;
 
   @ignore
   String get title {
@@ -80,7 +80,7 @@ class Place extends Equatable {
     String? state,
     String? country,
     String? locality,
-    Geometry? position,
+    Point? position,
   }) {
     return Place(
       city: city ?? this.city,
@@ -111,7 +111,7 @@ class Place extends Equatable {
       state: data[stateKey],
       country: data[countryKey],
       locality: data[localityKey],
-      position: Geometry.fromMap(data[positionKey]),
+      position: Point.fromMap(data[positionKey]),
     );
   }
 

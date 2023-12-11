@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '_widget.dart';
 
@@ -48,7 +49,7 @@ class HomeChoiceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomListTile(
       onTap: onPressed,
-      contentPadding: kTabLabelPadding.copyWith(top: 16.0, bottom: 16.0),
+      contentPadding: const EdgeInsets.all(16.0),
       leading: CustomAvatarWrapper(
         content: CustomAvatarWidget(
           imageUrl: image,
@@ -56,6 +57,43 @@ class HomeChoiceCard extends StatelessWidget {
       ),
       title: Text(name),
       trailing: const Icon(CupertinoIcons.right_chevron, size: 14.0),
+    );
+  }
+}
+
+class HomeChoiceLoadingListView extends StatelessWidget {
+  const HomeChoiceLoadingListView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final color = theme.colorScheme.surfaceVariant.withOpacity(0.12);
+    final textWidget = Container(
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.all(4.0),
+      child: Container(
+        height: 12.0,
+        width: 100.0,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+      ),
+    );
+    return Shimmer.fromColors(
+      baseColor: theme.colorScheme.onSurfaceVariant,
+      highlightColor: theme.colorScheme.onInverseSurface,
+      child: Column(
+        children: List.filled(
+          4,
+          CustomListTile(
+            contentPadding: const EdgeInsets.all(16.0),
+            title: textWidget,
+            trailing: const SizedBox.shrink(),
+            leading: CircleAvatar(backgroundColor: color),
+          ),
+        ),
+      ),
     );
   }
 }

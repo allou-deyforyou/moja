@@ -499,12 +499,9 @@ class HomeAccountAppBar extends StatelessWidget {
       foregroundColor: theme.colorScheme.onSurface,
       surfaceTintColor: theme.colorScheme.surfaceTint,
       title: DefaultTextStyle.merge(
-        style: theme.textTheme.titleLarge!.copyWith(
-          color: theme.colorScheme.onSurface,
+        style: theme.textTheme.headlineMedium!.copyWith(
           fontFamily: FontFamily.avenirNext,
           fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
-          wordSpacing: 1.0,
         ),
         child: Visibility(
           visible: cashin,
@@ -532,24 +529,25 @@ class HomeAccountSelectedWidget extends StatelessWidget {
     required this.image,
     required this.cashin,
     required this.amount,
+    required this.currency,
     required this.onTap,
   });
   final bool cashin;
   final String name;
   final String image;
   final double amount;
+  final String? currency;
   final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
     final localizations = context.localizations;
     return ListTile(
-      dense: true,
       onTap: onTap,
-      minVerticalPadding: 0.0,
+      minVerticalPadding: 16.0,
       horizontalTitleGap: 14.0,
       tileColor: theme.colorScheme.surfaceVariant,
-      contentPadding: const EdgeInsets.all(8.0).copyWith(left: 4.0),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.0)),
       leading: CustomAvatarWrapper(
         content: CustomAvatarWidget(
@@ -571,7 +569,7 @@ class HomeAccountSelectedWidget extends StatelessWidget {
         style: theme.textTheme.titleMedium!.copyWith(
           color: theme.colorScheme.primary,
         ),
-        child: Text("$amount f"),
+        child: Text("${defaultNumberFormat.format(amount)} ${currency ?? 'F'}"),
       ),
     );
   }
@@ -631,7 +629,7 @@ class HomeAccountLoadingListView extends StatelessWidget {
       alignment: Alignment.centerLeft,
       padding: const EdgeInsets.all(4.0),
       child: Container(
-        height: 10.0,
+        height: 12.0,
         width: 100.0,
         decoration: BoxDecoration(
           color: color,

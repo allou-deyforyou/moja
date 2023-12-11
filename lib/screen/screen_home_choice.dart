@@ -43,15 +43,9 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
 
   void _listenAccountState(BuildContext context, AsyncState state) {
     if (state is InitState) {
-      _loadAccount();
+      _selectAccount();
     } else if (state case SuccessState<List<Account>>(:final data)) {
       _relayAccounts = data;
-    } else if (state case FailureState<LoadAccountEvent>(:final code)) {
-      switch (code) {
-        case 'no-record':
-          _selectAccount();
-          break;
-      }
     } else if (state case FailureState<SelectAccountEvent>(:final code)) {
       switch (code) {}
     }
@@ -60,15 +54,9 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
   Future<void> _selectAccount() {
     return _accountController.run(
       SelectAccountEvent(position: (
-        longitude: _currentPosition.longitude,
         latitude: _currentPosition.latitude,
+        longitude: _currentPosition.longitude,
       )),
-    );
-  }
-
-  Future<void> _loadAccount() {
-    return _accountController.run(
-      const LoadAccountEvent(),
     );
   }
 
@@ -82,7 +70,7 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
     _relayAccounts = List.empty(growable: true);
 
     /// AccountService
-    _accountController = AsyncController(const InitState());
+    _accountController = currentAccounts;
   }
 
   @override
@@ -101,18 +89,24 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
             listener: _listenAccountState,
             controller: _accountController,
             builder: (context, state, child) {
-              return SliverList.builder(
-                itemCount: _relayAccounts.length,
-                itemBuilder: (context, index) {
-                  final item = _relayAccounts[index];
-
-                  return HomeChoiceCard(
-                    onPressed: _openAccountScreen(item),
-                    image: item.image,
-                    name: item.name,
-                  );
-                },
-              );
+              return switch (state) {
+                PendingState() => const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: HomeChoiceLoadingListView(),
+                  ),
+                SuccessState<List<Account>>() => SliverList.builder(
+                    itemCount: _relayAccounts.length,
+                    itemBuilder: (context, index) {
+                      final item = _relayAccounts[index];
+                      return HomeChoiceCard(
+                        onPressed: _openAccountScreen(item),
+                        image: item.image,
+                        name: item.name,
+                      );
+                    },
+                  ),
+                _ => const SliverToBoxAdapter(),
+              };
             },
           ),
         ],
