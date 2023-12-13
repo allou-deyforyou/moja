@@ -6,19 +6,23 @@ import '_screen.dart';
 class HomeAccountScreen extends StatefulWidget {
   const HomeAccountScreen({
     super.key,
-    required this.account,
+    required this.currentRelay,
+    required this.currentAccount,
   });
-  final Account account;
+  final Relay? currentRelay;
+  final Account currentAccount;
   static const name = 'home-account';
   static const path = 'account';
-  static const accountKey = 'account';
+  static const currentRelayKey = 'currentRelay';
+  static const currentAccountKey = 'currentAccount';
   @override
   State<HomeAccountScreen> createState() => _HomeAccountScreenState();
 }
 
 class _HomeAccountScreenState extends State<HomeAccountScreen> {
   /// Assets
-  late Account _currentAccount;
+  late final Relay? _currentRelay;
+  late final Account _currentAccount;
 
   late TextEditingController _amountTextController;
 
@@ -35,7 +39,8 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
     super.initState();
 
     /// Assets
-    _currentAccount = widget.account;
+    _currentRelay = widget.currentRelay;
+    _currentAccount = widget.currentAccount;
     final amount = _currentAccount.amount?.formatted;
     _amountTextController = TextEditingController(text: amount);
     _amountTextController.selection = TextSelection(
@@ -55,10 +60,11 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
             cashin: _currentAccount.transaction == Transaction.cashin,
             image: _currentAccount.image,
             name: _currentAccount.name,
+            relay: _currentRelay?.name,
           ),
           SliverToBoxAdapter(
             child: HomeAccountAmountTextField(
-              currency: _currentAccount.country.value?.currency,
+              currency: _currentAccount.country?.currency,
               controller: _amountTextController,
             ),
           ),

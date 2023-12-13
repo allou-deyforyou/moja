@@ -29,7 +29,6 @@ dependencies:
   # Services
   firebase_messaging:
   permission_handler:
-  isar_flutter_libs:
   firebase_core:
   path_provider:
   service_tools:
@@ -38,14 +37,12 @@ dependencies:
   share_plus:
   archive:
   http:
-  isar:
   hive:
   dio:
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  isar_generator:
   flutter_lints:
   build_runner:
   analyzer:

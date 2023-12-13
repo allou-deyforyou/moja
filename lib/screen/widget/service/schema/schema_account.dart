@@ -1,24 +1,21 @@
 import 'dart:convert';
 
 import 'package:equatable/equatable.dart';
-import 'package:isar/isar.dart';
 
 import '_schema.dart';
-
-part 'schema_account.g.dart';
 
 enum Transaction {
   cashin,
   cashout;
 }
 
-@Collection(inheritance: false)
 class Account extends Equatable {
-  Account({
+  const Account({
     required this.id,
     required this.name,
     required this.image,
     this.transaction,
+    this.country,
     this.amount,
   });
 
@@ -33,24 +30,20 @@ class Account extends Equatable {
   /// Edges
   static const String countryKey = 'countries';
 
-  Id get isarId => id.fastHash;
-
   final String id;
   final String name;
   final String image;
   final double? amount;
-  @Enumerated(EnumType.name)
   final Transaction? transaction;
 
   /// Edges
-  final country = IsarLink<Country>();
+  final Country? country;
 
   @override
   String toString() {
     return toMap().toString();
   }
 
-  @ignore
   @override
   List<Object?> get props {
     return [
@@ -76,10 +69,8 @@ class Account extends Equatable {
       image: image ?? this.image,
       amount: amount ?? this.amount,
       transaction: transaction ?? this.transaction,
-    )
-
-      /// Edges
-      ..country.value = country ?? this.country.value;
+      country: country ?? this.country,
+    );
   }
 
   Account clone() {
@@ -89,7 +80,7 @@ class Account extends Equatable {
       image: image,
       amount: amount,
       transaction: transaction,
-      country: country.value,
+      country: country,
     );
   }
 
@@ -99,10 +90,8 @@ class Account extends Equatable {
       id: data[idKey],
       name: data[nameKey],
       image: data[imageKey],
-    )
-
-      /// Edges
-      ..country.value = List.of((data[countryKey] ?? []).map<Country>((item) => Country.fromMap(item)!)).firstOrNull;
+      country: List.of((data[countryKey] ?? []).map<Country>((item) => Country.fromMap(item)!)).firstOrNull,
+    );
   }
 
   Map<String, dynamic> toMap() {

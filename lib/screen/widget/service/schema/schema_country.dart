@@ -1,13 +1,9 @@
 import 'dart:convert';
 
 import 'package:equatable/equatable.dart';
-import 'package:isar/isar.dart';
 
 import '_schema.dart';
 
-part 'schema_country.g.dart';
-
-@Collection(inheritance: false)
 class Country extends Equatable {
   const Country({
     this.id,
@@ -28,18 +24,13 @@ class Country extends Equatable {
   static const String phoneFormatKey = 'phone_format';
   static const String translationsKey = 'translations';
 
-  Id? get isarId => id?.fastHash;
-
   final String? id;
   final String? code;
   final String? dialCode;
   final String? currency;
-  @ignore
   final String? phoneFormat;
-  @ignore
   final Map<String, String>? translations;
 
-  @ignore
   @override
   List<Object?> get props {
     return [

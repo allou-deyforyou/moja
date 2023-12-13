@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:widget_tools/widget_tools.dart';
 import 'package:listenable_tools/listenable_tools.dart';
-import 'package:moja/screen/widget/service/service_relay.dart';
 
 import '_screen.dart';
 
@@ -49,10 +48,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     context.pushNamed(HomeMenuScreen.name);
   }
 
-  VoidCallback _openChoiceScreen(Transaction transaction) {
+  VoidCallback _openChoiceScreen(Transaction transaction, {Relay? relay}) {
     return () async {
       final data = await context.pushNamed<Account>(
         extra: {
+          HomeChoiceScreen.currentRelayKey: relay,
           HomeChoiceScreen.currentPositionKey: _centerPosition,
           HomeChoiceScreen.currentTransactionKey: transaction,
         },
@@ -68,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   void _openAccountScreen() async {
     final data = await context.pushNamed<Account>(
-      extra: {HomeAccountScreen.accountKey: _currentAccount},
+      extra: {HomeAccountScreen.currentAccountKey: _currentAccount},
       HomeAccountScreen.name,
     );
     if (data != null) {
@@ -85,7 +85,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   void _onMapCreated(MaplibreMapController controller) async {
     _mapController = controller;
-    await _onStyleLoadedCallback();
   }
 
   Future<void> _onStyleLoadedCallback() async {
@@ -101,6 +100,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     ]);
 
     _goToMyPosition();
+  }
+
+  Future<void> _clearMap() {
+    return Future.wait([
+      _mapController!.clearLines(),
+      _mapController!.clearSymbols(),
+    ]);
   }
 
   Future<void> _loadImages() async {
@@ -151,6 +157,29 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _goToPosition(_centerPosition!, bearing: heading ?? 0.0);
   }
 
+  Future<void> _addRelayMaplibre(List<Relay> relays) async {
+    await _clearMap();
+    await _mapController!.addSymbols(List.of(relays.map((item) {
+      return SymbolOptions(
+        geometry: _placeToLatLng(item.location),
+        iconImage: Assets.images.pin2.keyName,
+        iconOffset: const Offset(0.0, -20.0),
+        textOffset: const Offset(0.0, -3.0),
+        textField: item.name,
+      );
+    })));
+  }
+
+  Future<void> _drawLines(List<PolyLine> routes) async {
+    const options = LineOptions(lineColor: "#ff0000", lineJoin: 'round', lineWidth: 4.0);
+    for (final route in routes) {
+      await _mapController!.addLine(options.copyWith(LineOptions(
+          geometry: route.coordinates!.expand((coordinate) {
+        return [LatLng(coordinate[0], coordinate[1])];
+      }).toList())));
+    }
+  }
+
   /// PlaceService
   late AsyncController<AsyncState> _placeController;
   Place? _currentPlace;
@@ -176,7 +205,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   late final AsyncController<AsyncState> _relayController;
 
   void _listenRelayState(BuildContext context, AsyncState state) {
-    if (state case FailureState<SelectAccountEvent>(:final code)) {
+    if (state case SuccessState<List<Relay>>(:final data)) {
+      _addRelayMaplibre(data);
+    } else if (state case FailureState<SelectAccountEvent>(:final code)) {
       switch (code) {}
     }
   }
@@ -185,6 +216,28 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return _relayController.run(SelectRelayEvent(
       account: _currentAccount!,
     ));
+  }
+
+  /// RouteService
+  late AsyncController<AsyncState> _routeController;
+
+  void _listenRouteState(BuildContext context, AsyncState state) {
+    if (state case SuccessState<List<PolyLine>>(:final data)) {
+      _drawLines(data);
+    } else if (state case FailureState<SelectAccountEvent>(:final code)) {
+      switch (code) {}
+    }
+  }
+
+  Future<void> _getRoute(Relay item) {
+    final position = _placeToLatLng(item.location)!;
+    return _routeController.run(GetRouteEvent(source: (
+      longitude: _userLocation!.position.longitude,
+      latitude: _userLocation!.position.latitude,
+    ), destination: (
+      longitude: position.longitude,
+      latitude: position.latitude,
+    )));
   }
 
   @override
@@ -205,23 +258,66 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _relayController = AsyncController(const InitState());
   }
 
-  VoidCallback _openRelaySheet(Relay relay) {
+  VoidCallback _callRelayModal(Relay item) {
+    return () {};
+  }
+
+  VoidCallback _openRelaySheet(Relay item) {
     return () async {
-      final data = await showCustomBottomSheet(
+      _routeController = AsyncController(const InitState());
+      _getRoute(item);
+
+      await showCustomBottomSheet(
         context: _scaffoldContext,
         builder: (context) {
-          return const HomeAccountBottomSheet();
+          return HomeAccountBottomSheet(
+            content: Column(
+              children: [
+                ControllerListener(
+                  listener: _listenRouteState,
+                  controller: _routeController,
+                  child: HomeAccountItemWidget(
+                    location: item.location!.title,
+                    onCall: _callRelayModal(item),
+                    image: item.image,
+                    name: item.name,
+                  ),
+                ),
+                const Padding(padding: kMaterialListPadding),
+                Row(
+                  children: [
+                    Expanded(
+                      child: HomeCashInActionButton(
+                        onPressed: _openChoiceScreen(
+                          Transaction.cashin,
+                          relay: item,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: HomeCashOutActionButton(
+                        onPressed: _openChoiceScreen(
+                          Transaction.cashout,
+                          relay: item,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
         },
       );
-      if (data != null) {
-      } else {
-        _openAccountListView();
-      }
+
+      await _clearMap();
+
+      _openAccountListView();
     };
   }
 
   void _openAccountListView() async {
-    final data = await showCustomBottomSheet(
+    await showCustomBottomSheet(
       context: _scaffoldContext,
       builder: (context) {
         final cashin = _currentAccount!.transaction == Transaction.cashin;
@@ -231,14 +327,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               cashin: cashin,
               bottom: HomeAccountSelectedWidget(
                 onTap: _openAccountScreen,
-                currency: _currentAccount?.country.value?.currency,
+                currency: _currentAccount?.country?.currency,
                 amount: _currentAccount!.amount!,
                 image: _currentAccount!.image,
                 name: _currentAccount!.name,
                 cashin: cashin,
               ),
             ),
-            SliverPadding(padding: kMaterialListPadding / 2),
+            const SliverPadding(
+              padding: kMaterialListPadding,
+              sliver: SliverToBoxAdapter(child: Divider()),
+            ),
             ControllerConsumer(
               listener: _listenRelayState,
               controller: _relayController,
@@ -258,8 +357,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         itemBuilder: (context, index) {
                           final item = data[index];
                           return HomeAccountItemWidget(
-                            onTap: _openRelaySheet(item),
                             location: item.location!.title,
+                            onCall: _callRelayModal(item),
+                            onTap: _openRelaySheet(item),
                             image: item.image,
                             name: item.name,
                           );
@@ -274,14 +374,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         );
       },
     );
-    if (data != null) {
-    } else {
-      _showLocationWidget();
-    }
+
+    await _mapController!.clearSymbols();
+
+    _showLocationWidget();
   }
 
   void _showLocationWidget() async {
-    final data = await showCustomBottomSheet(
+    await showCustomBottomSheet(
       context: _scaffoldContext,
       builder: (context) {
         return HomeBottomSheetBackground(
@@ -302,15 +402,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   );
                 },
               ),
+              const Padding(padding: kMaterialListPadding),
               const Divider(),
+              const Padding(padding: kMaterialListPadding),
               Row(
                 children: [
                   Expanded(
-                    child: Builder(builder: (context) {
-                      return HomeCashInActionButton(
-                        onPressed: _openChoiceScreen(Transaction.cashin),
-                      );
-                    }),
+                    child: HomeCashInActionButton(
+                      onPressed: _openChoiceScreen(Transaction.cashin),
+                    ),
                   ),
                   Expanded(
                     child: HomeCashOutActionButton(
@@ -325,14 +425,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       },
     );
 
-    if (data != null) {
-    } else {
-      _showLocationWidget();
-    }
+    _showLocationWidget();
   }
 
   Future<Iterable<Widget>> _suggestionsBuilder(BuildContext context, SearchController controller) async {
-    if (_userLocation == null) return const [];
+    if (_userLocation == null || controller.text.isEmpty) return const [];
 
     final position = _userLocation!.position;
     final data = searchPlace(query: controller.text, position: (

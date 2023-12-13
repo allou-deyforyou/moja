@@ -8,8 +8,10 @@ class HomeChoiceSliverAppBar extends StatelessWidget {
   const HomeChoiceSliverAppBar({
     super.key,
     required this.cashin,
+    required this.relay,
   });
   final bool cashin;
+  final String? relay;
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
@@ -18,17 +20,32 @@ class HomeChoiceSliverAppBar extends StatelessWidget {
       pinned: true,
       centerTitle: false,
       leadingWidth: 64.0,
-      toolbarHeight: 64.0,
+      toolbarHeight: 74.0,
       automaticallyImplyLeading: false,
       backgroundColor: theme.colorScheme.surface,
       titleTextStyle: theme.textTheme.headlineMedium!.copyWith(
         fontFamily: FontFamily.avenirNext,
         fontWeight: FontWeight.w600,
       ),
-      title: Visibility(
-        visible: cashin,
-        replacement: Text(localizations.withdrawmoney.toUpperCase()),
-        child: Text(localizations.depositmoney.toUpperCase()),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Visibility(
+            visible: cashin,
+            replacement: Text(localizations.moneywithdraw.toUpperCase()),
+            child: Text(localizations.moneydeposit.toUpperCase()),
+          ),
+          if (relay != null)
+            DefaultTextStyle(
+              style: theme.textTheme.titleLarge!.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w400,
+                fontSize: 18.0,
+                height: 1.0,
+              ),
+              child: Text(relay!),
+            ),
+        ],
       ),
       actions: const [CustomCloseButton()],
     );
@@ -49,7 +66,8 @@ class HomeChoiceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomListTile(
       onTap: onPressed,
-      contentPadding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16.0),
+      height: kMinInteractiveDimension * 1.5,
       leading: CustomAvatarWrapper(
         content: CustomAvatarWidget(
           imageUrl: image,
@@ -87,7 +105,8 @@ class HomeChoiceLoadingListView extends StatelessWidget {
         children: List.filled(
           4,
           CustomListTile(
-            contentPadding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16.0),
+            height: kMinInteractiveDimension * 1.5,
             title: textWidget,
             trailing: const SizedBox.shrink(),
             leading: CircleAvatar(backgroundColor: color),

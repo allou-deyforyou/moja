@@ -9,10 +9,13 @@ class HomeAccountSliverAppBar extends StatelessWidget {
     required this.cashin,
     required this.name,
     required this.image,
+    required this.relay,
   });
   final bool cashin;
   final String name;
   final String image;
+  final String? relay;
+
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
@@ -21,7 +24,7 @@ class HomeAccountSliverAppBar extends StatelessWidget {
       pinned: true,
       centerTitle: true,
       leadingWidth: 64.0,
-      toolbarHeight: 64.0,
+      toolbarHeight: 74.0,
       backgroundColor: theme.colorScheme.surface,
       titleTextStyle: theme.textTheme.headlineMedium!.copyWith(
         fontFamily: FontFamily.avenirNext,
@@ -34,10 +37,23 @@ class HomeAccountSliverAppBar extends StatelessWidget {
           ),
         ),
       ),
-      title: Visibility(
-        visible: cashin,
-        replacement: Text(localizations.withdrawal(name).toUpperCase()),
-        child: Text(localizations.deposit(name).toUpperCase()),
+      title: Column(
+        children: [
+          Visibility(
+            visible: cashin,
+            replacement: Text(localizations.withdrawal(name).toUpperCase()),
+            child: Text(localizations.deposit(name).toUpperCase()),
+          ),
+          if (relay != null)
+            DefaultTextStyle(
+              style: theme.textTheme.titleLarge!.copyWith(
+                color: theme.colorScheme.primary,
+                fontSize: 18.0,
+                height: 1.0,
+              ),
+              child: Text(relay!),
+            ),
+        ],
       ),
       actions: const [CustomCloseButton()],
     );

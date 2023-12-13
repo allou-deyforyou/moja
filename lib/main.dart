@@ -67,7 +67,8 @@ class _MyAppState extends State<MyApp> {
                 final data = state.extra as Map<String, dynamic>;
                 return DialogPage<Account>(
                   child: HomeAccountScreen(
-                    account: data[HomeAccountScreen.accountKey],
+                    currentAccount: data[HomeAccountScreen.currentAccountKey],
+                    currentRelay: data[HomeAccountScreen.currentRelayKey],
                   ),
                 );
               },
@@ -79,8 +80,9 @@ class _MyAppState extends State<MyApp> {
                 final data = state.extra as Map<String, dynamic>;
                 return DialogPage<Account>(
                   child: HomeChoiceScreen(
+                    currentTransaction: data[HomeChoiceScreen.currentTransactionKey],
                     currentPosition: data[HomeChoiceScreen.currentPositionKey],
-                    transaction: data[HomeChoiceScreen.currentTransactionKey],
+                    currentRelay: data[HomeChoiceScreen.currentRelayKey],
                   ),
                 );
               },

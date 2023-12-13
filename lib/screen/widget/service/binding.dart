@@ -11,7 +11,6 @@ class MyService extends FlutterService {
       FirebaseConfig.development(),
       SurrealConfig.development(),
       HiveLocalDB.development(),
-      IsarLocalDB.development(),
     ]);
   }
 
@@ -21,7 +20,6 @@ class MyService extends FlutterService {
       FirebaseConfig.production(),
       SurrealConfig.production(),
       HiveLocalDB.production(),
-      IsarLocalDB.production(),
     ]);
   }
 }

@@ -1,13 +1,9 @@
 import 'dart:convert';
 
 import 'package:equatable/equatable.dart';
-import 'package:isar/isar.dart';
 
 import '_schema.dart';
 
-part 'schema_place.g.dart';
-
-@Embedded(inheritance: false)
 class Place extends Equatable {
   const Place({
     this.city,
@@ -34,7 +30,6 @@ class Place extends Equatable {
   final String? locality;
   final Point? position;
 
-  @ignore
   String get title {
     List<String> words = (name ?? '').split(' ');
     if (city != null) {
@@ -46,7 +41,6 @@ class Place extends Equatable {
     return words.toSet().toList().reversed.join(' ');
   }
 
-  @ignore
   String get subtitle {
     List<String> words = (country ?? '').split(' ');
     if (state != null) {
@@ -61,7 +55,6 @@ class Place extends Equatable {
     return toMap().toString();
   }
 
-  @ignore
   @override
   List<Object?> get props {
     return [

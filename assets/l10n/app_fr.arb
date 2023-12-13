@@ -24,8 +24,26 @@
             }
         }
     },
-    "withdrawmoney": "retirer de l'argent",
-    "depositmoney": "déposer de l'argent",
+    "moneywithdraw": "retrait d'argent",
+    "moneydeposit": "dépôt d'argent",
+    "moneywithdrawfrom": "retrait d'argent chez {name}",
+    "@moneywithdrawfrom": {
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "Wave"
+            }
+        }
+    },
+    "moneydepositat": "dépôt d'argent chez {name}",
+    "@moneydepositat": {
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "Wave"
+            }
+        }
+    },
     "amount": "montant",
     "edit": "modifier",
     "menu": "menu",

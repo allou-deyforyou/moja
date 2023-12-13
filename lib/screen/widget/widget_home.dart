@@ -184,49 +184,47 @@ class HomeLocationWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.theme;
     final localizations = context.localizations;
-    final child = ListTile(
-      contentPadding: kTabLabelPadding.copyWith(right: 2.0, top: 16.0, bottom: 28.0),
-      titleTextStyle: theme.textTheme.headlineMedium!.copyWith(
-        fontFamily: FontFamily.avenirNext,
-        fontWeight: FontWeight.w600,
+    final child = SearchAnchor(
+      viewElevation: 0.0,
+      suggestionsBuilder: suggestionsBuilder,
+      viewBackgroundColor: theme.scaffoldBackgroundColor,
+      viewHintText: MaterialLocalizations.of(context).searchFieldLabel.capitalize(),
+      viewLeading: IconButton(
+        onPressed: Navigator.of(context).pop,
+        icon: const Icon(CupertinoIcons.arrow_left),
       ),
-      subtitleTextStyle: theme.textTheme.titleMedium!.copyWith(
-        fontWeight: FontWeight.w500,
-        height: 1.2,
-      ),
-      leading: const Icon(CupertinoIcons.location_solid),
-      title: Text(localizations.searchpoint.toUpperCase()),
-      subtitle: SizedBox(
-        height: 35.0,
-        child: Visibility(
-          visible: title != null,
-          replacement: Text('${localizations.loading.capitalize()}...'),
-          child: Builder(
-            builder: (context) {
-              return DefaultTextStyle.merge(
-                style: TextStyle(color: theme.colorScheme.primary),
-                child: Text(title!, maxLines: 2),
-              );
-            },
+      builder: (context, controller) {
+        return ListTile(
+          onTap: controller.openView,
+          contentPadding: kTabLabelPadding,
+          titleTextStyle: theme.textTheme.headlineMedium!.copyWith(
+            fontFamily: FontFamily.avenirNext,
+            fontWeight: FontWeight.w600,
           ),
-        ),
-      ),
-      trailing: SearchAnchor(
-        viewElevation: 0.0,
-        suggestionsBuilder: suggestionsBuilder,
-        viewBackgroundColor: theme.scaffoldBackgroundColor,
-        viewHintText: MaterialLocalizations.of(context).searchFieldLabel.capitalize(),
-        viewLeading: IconButton(
-          onPressed: Navigator.of(context).pop,
-          icon: const Icon(CupertinoIcons.arrow_left),
-        ),
-        builder: (context, controller) {
-          return IconButton(
-            onPressed: controller.openView,
-            icon: const Icon(CupertinoIcons.pen),
-          );
-        },
-      ),
+          subtitleTextStyle: theme.textTheme.titleMedium!.copyWith(
+            fontWeight: FontWeight.w500,
+            height: 1.2,
+          ),
+          leading: const Icon(CupertinoIcons.location_solid),
+          title: Text(localizations.searchpoint.toUpperCase()),
+          subtitle: SizedBox(
+            height: 35.0,
+            child: Visibility(
+              visible: title != null,
+              replacement: Text('${localizations.loading.capitalize()}...'),
+              child: Builder(
+                builder: (context) {
+                  return DefaultTextStyle.merge(
+                    style: TextStyle(color: theme.colorScheme.primary),
+                    child: Text(title!, maxLines: 2),
+                  );
+                },
+              ),
+            ),
+          ),
+          trailing: const Icon(CupertinoIcons.pen),
+        );
+      },
     );
     return Visibility(
       visible: title != null,
@@ -254,11 +252,11 @@ class HomeCashInActionButton extends StatelessWidget {
       top: false,
       right: false,
       child: Padding(
-        padding: const EdgeInsets.only(left: 16.0, top: 24.0, bottom: 24.0, right: 8.0),
+        padding: const EdgeInsets.only(left: 16.0, right: 8.0),
         child: FilledButton.icon(
           style: FilledButton.styleFrom(
+            padding: EdgeInsets.zero,
             alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.only(right: 4.0),
             foregroundColor: theme.colorScheme.onSurface,
             backgroundColor: theme.colorScheme.surfaceVariant,
             textStyle: theme.textTheme.titleSmall!.copyWith(
@@ -273,9 +271,12 @@ class HomeCashInActionButton extends StatelessWidget {
             height: kMinInteractiveDimension,
             width: kMinInteractiveDimension,
           ),
-          label: Text(
-            localizations.depositmoney.capitalize(),
-            textAlign: TextAlign.center,
+          label: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            child: Text(
+              localizations.moneydeposit.capitalize(),
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       ),
@@ -297,11 +298,11 @@ class HomeCashOutActionButton extends StatelessWidget {
       top: false,
       left: false,
       child: Padding(
-        padding: const EdgeInsets.only(right: 16.0, top: 24.0, bottom: 24.0, left: 8.0),
+        padding: const EdgeInsets.only(right: 16.0, left: 8.0),
         child: FilledButton.icon(
           style: FilledButton.styleFrom(
+            padding: EdgeInsets.zero,
             alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.only(right: 4.0),
             foregroundColor: theme.colorScheme.onSurface,
             backgroundColor: theme.colorScheme.surfaceVariant,
             textStyle: theme.textTheme.titleSmall!.copyWith(
@@ -319,9 +320,12 @@ class HomeCashOutActionButton extends StatelessWidget {
               width: kMinInteractiveDimension,
             ),
           ),
-          label: Text(
-            localizations.withdrawmoney.capitalize(),
-            textAlign: TextAlign.center,
+          label: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            child: Text(
+              localizations.moneywithdraw.capitalize(),
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       ),
@@ -397,9 +401,13 @@ class HomeBackButton extends StatelessWidget {
   final VoidCallback? onPressed;
   @override
   Widget build(BuildContext context) {
-    return HomeButton(
-      onPressed: onPressed ?? Navigator.of(context).pop,
-      child: const Icon(CupertinoIcons.arrow_left),
+    return Container(
+      alignment: Alignment.centerLeft,
+      padding: kTabLabelPadding.copyWith(bottom: 16.0),
+      child: HomeButton(
+        onPressed: onPressed ?? Navigator.of(context).pop,
+        child: const Icon(CupertinoIcons.arrow_left),
+      ),
     );
   }
 }
@@ -407,8 +415,10 @@ class HomeBackButton extends StatelessWidget {
 class HomeBottomSheetBackground extends StatelessWidget {
   const HomeBottomSheetBackground({
     super.key,
+    this.padding,
     required this.child,
   });
+  final EdgeInsetsGeometry? padding;
   final Widget child;
   @override
   Widget build(BuildContext context) {
@@ -420,7 +430,10 @@ class HomeBottomSheetBackground extends StatelessWidget {
       shape: theme.bottomSheetTheme.shape,
       shadowColor: theme.colorScheme.surfaceTint,
       surfaceTintColor: theme.colorScheme.primary,
-      child: child,
+      child: Padding(
+        padding: padding ?? const EdgeInsets.symmetric(vertical: 24.0),
+        child: child,
+      ),
     );
   }
 }
@@ -442,36 +455,29 @@ class HomeSliverBottomSheet extends StatelessWidget {
       snapSizes: const [0.7, 1.0],
       shouldCloseOnMinExtent: false,
       builder: (context, scrollController) {
-        return NestedScrollView(
-          controller: scrollController,
-          headerSliverBuilder: (context, innerBoxIsScrolled) {
-            return [
-              SliverToBoxAdapter(
-                child: Container(
-                  alignment: Alignment.centerLeft,
-                  padding: kTabLabelPadding.copyWith(bottom: 16.0),
-                  child: HomeBackButton(
-                    onPressed: () => CustomNavigator.pop(context),
-                  ),
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            HomeBackButton(
+              onPressed: () => CustomNavigator.pop(context),
+            ),
+            Expanded(
+              child: HomeBottomSheetBackground(
+                padding: EdgeInsets.zero,
+                child: CustomScrollView(
+                  controller: scrollController,
+                  slivers: [
+                    SliverMainAxisGroup(slivers: slivers),
+                    const SliverSafeArea(
+                      sliver: SliverToBoxAdapter(
+                        child: SizedBox(height: kMinInteractiveDimension),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ];
-          },
-          body: Builder(builder: (context) {
-            return HomeBottomSheetBackground(
-              child: CustomScrollView(
-                controller: scrollController,
-                slivers: [
-                  ...slivers,
-                  const SliverSafeArea(
-                    sliver: SliverToBoxAdapter(
-                      child: SizedBox(height: kMinInteractiveDimension),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
+            ),
+          ],
         );
       },
     );
@@ -493,7 +499,7 @@ class HomeAccountAppBar extends StatelessWidget {
     return SliverAppBar(
       pinned: true,
       elevation: 0.12,
-      toolbarHeight: 74.0,
+      toolbarHeight: 84.0,
       automaticallyImplyLeading: false,
       backgroundColor: theme.colorScheme.surface,
       foregroundColor: theme.colorScheme.onSurface,
@@ -581,19 +587,23 @@ class HomeAccountItemWidget extends StatelessWidget {
     required this.name,
     required this.image,
     required this.location,
-    required this.onTap,
+    this.onTap,
+    this.onCall,
   });
   final String name;
-  final String image;
+  final String? image;
   final String location;
   final VoidCallback? onTap;
+  final VoidCallback? onCall;
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
     return CustomListTile(
       onTap: onTap,
+      height: kMinInteractiveDimension * 1.5,
       leading: CircleAvatar(
         backgroundColor: theme.colorScheme.surfaceVariant,
+        child: const Icon(Icons.storefront),
       ),
       title: DefaultTextStyle.merge(
         style: theme.textTheme.titleMedium!.copyWith(
@@ -613,7 +623,15 @@ class HomeAccountItemWidget extends StatelessWidget {
         ),
         child: Text(location),
       ),
-      trailing: const Text("100 m"),
+      trailing: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          padding: kTabLabelPadding,
+          textStyle: theme.textTheme.titleMedium,
+          side: BorderSide(color: theme.colorScheme.primary),
+        ),
+        onPressed: onCall,
+        child: const Text("Appeler"),
+      ),
     );
   }
 }
@@ -644,6 +662,7 @@ class HomeAccountLoadingListView extends StatelessWidget {
         children: List.filled(
           4,
           CustomListTile(
+            height: kMinInteractiveDimension * 1.4,
             title: textWidget,
             subtitle: textWidget,
             trailing: const SizedBox.shrink(),
@@ -656,10 +675,24 @@ class HomeAccountLoadingListView extends StatelessWidget {
 }
 
 class HomeAccountBottomSheet extends StatelessWidget {
-  const HomeAccountBottomSheet({super.key});
-
+  const HomeAccountBottomSheet({
+    super.key,
+    required this.content,
+  });
+  final Widget content;
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        HomeBackButton(
+          onPressed: () => CustomNavigator.pop(context),
+        ),
+        HomeBottomSheetBackground(
+          child: content,
+        ),
+      ],
+    );
   }
 }

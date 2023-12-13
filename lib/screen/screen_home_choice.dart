@@ -8,13 +8,16 @@ import '_screen.dart';
 class HomeChoiceScreen extends StatefulWidget {
   const HomeChoiceScreen({
     super.key,
-    required this.transaction,
+    required this.currentTransaction,
     required this.currentPosition,
+    required this.currentRelay,
   });
+  final Relay? currentRelay;
   final LatLng currentPosition;
-  final Transaction transaction;
+  final Transaction currentTransaction;
   static const name = 'home-choice';
   static const path = 'choice';
+  static const currentRelayKey = 'currentRelay';
   static const currentPositionKey = 'currentPosition';
   static const currentTransactionKey = 'currentTransaction';
   @override
@@ -23,6 +26,7 @@ class HomeChoiceScreen extends StatefulWidget {
 
 class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
   /// Assets
+  late final Relay? _currentRelay;
   late final LatLng _currentPosition;
   late final Transaction _currentTransaction;
 
@@ -32,7 +36,8 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
     return () async {
       account = account.copyWith(transaction: _currentTransaction);
       final data = await context.pushNamed<Account>(HomeAccountScreen.name, extra: {
-        HomeAccountScreen.accountKey: account,
+        HomeAccountScreen.currentRelayKey: _currentRelay,
+        HomeAccountScreen.currentAccountKey: account,
       });
       if (data != null && mounted) context.pop(data);
     };
@@ -65,8 +70,9 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
     super.initState();
 
     /// Assets
-    _currentTransaction = widget.transaction;
+    _currentRelay = widget.currentRelay;
     _currentPosition = widget.currentPosition;
+    _currentTransaction = widget.currentTransaction;
     _relayAccounts = List.empty(growable: true);
 
     /// AccountService
@@ -82,8 +88,9 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
         slivers: [
           HomeChoiceSliverAppBar(
             cashin: _currentTransaction == Transaction.cashin,
+            relay: _currentRelay?.name,
           ),
-          SliverPadding(padding: kMaterialListPadding / 2),
+          SliverPadding(padding: kMaterialListPadding / 3),
           ControllerConsumer(
             autoListen: true,
             listener: _listenAccountState,

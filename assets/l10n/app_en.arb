@@ -24,8 +24,26 @@
             }
         }
     },
-    "withdrawmoney": "withdraw money",
-    "depositmoney": "deposit money",
+    "moneywithdraw": "money withdraw",
+    "moneydeposit": "money deposit",
+    "moneywithdrawfrom": "money withdraw from {name}",
+    "@moneywithdrawfrom": {
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "Wave"
+            }
+        }
+    },
+    "moneydepositat": "money deposit at {name}",
+    "@moneydepositat": {
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "Wave"
+            }
+        }
+    },
     "amount": "amount",
     "edit": "edit",
     "menu": "menu",

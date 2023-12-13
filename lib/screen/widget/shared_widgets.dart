@@ -61,18 +61,20 @@ class CustomCloseButton extends StatelessWidget {
 class CustomListTile extends StatelessWidget {
   const CustomListTile({
     super.key,
-    this.contentPadding,
-    this.textColor,
-    this.splashColor,
     this.onTap,
-    this.title,
+    this.height,
+    this.shape,
+    this.horizontalTitleGap,
+    this.padding,
     this.leading,
+    this.title,
     this.subtitle,
     this.trailing,
   });
-  final EdgeInsetsGeometry? contentPadding;
-  final Color? textColor;
-  final Color? splashColor;
+  final double? height;
+  final ShapeBorder? shape;
+  final double? horizontalTitleGap;
+  final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
   final Widget? leading;
   final Widget? title;
@@ -80,20 +82,36 @@ class CustomListTile extends StatelessWidget {
   final Widget? trailing;
   @override
   Widget build(BuildContext context) {
-    final theme = context.theme;
-    return ListTile(
-      textColor: textColor,
-      splashColor: splashColor,
-      contentPadding: contentPadding ?? kTabLabelPadding.copyWith(top: 6.0, bottom: 6.0),
-      titleTextStyle: theme.textTheme.titleMedium!.copyWith(
-        letterSpacing: 0.0,
-        fontSize: 18.0,
-      ),
+    return InkWell(
       onTap: onTap,
-      title: title,
-      leading: leading,
-      subtitle: subtitle,
-      trailing: trailing ?? const Icon(CupertinoIcons.right_chevron, size: 14.0),
+      customBorder: shape,
+      child: Container(
+        padding: padding ?? kTabLabelPadding,
+        height: height ?? kMinInteractiveDimension * 1.1,
+        decoration: ShapeDecoration(shape: shape ?? InputBorder.none),
+        child: SafeArea(
+          top: false,
+          bottom: false,
+          child: NavigationToolbar(
+            centerMiddle: false,
+            middleSpacing: horizontalTitleGap ?? (leading != null ? 14.0 : 0.0),
+            leading: leading,
+            middle: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (title != null)
+                  DefaultTextStyle.merge(
+                    style: const TextStyle(fontSize: 18.0),
+                    child: title!,
+                  ),
+                if (subtitle != null) subtitle!,
+              ],
+            ),
+            trailing: trailing,
+          ),
+        ),
+      ),
     );
   }
 }

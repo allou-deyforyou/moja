@@ -4,19 +4,19 @@ import 'package:equatable/equatable.dart';
 
 import '_schema.dart';
 
-class Point extends Equatable {
-  const Point({
+class PolyLine extends Equatable {
+  const PolyLine({
     this.type,
     this.coordinates,
   });
 
-  static const String schema = 'Point';
+  static const String schema = 'polyline';
 
   static const String typeKey = 'type';
   static const String coordinatesKey = 'coordinates';
 
   final String? type;
-  final List<double>? coordinates;
+  final List<List<double>>? coordinates;
 
   @override
   String toString() {
@@ -31,27 +31,27 @@ class Point extends Equatable {
     ];
   }
 
-  Point copyWith({
+  PolyLine copyWith({
     String? type,
-    List<double>? coordinates,
+    List<List<double>>? coordinates,
   }) {
-    return Point(
+    return PolyLine(
       type: type ?? this.type,
       coordinates: coordinates ?? this.coordinates,
     );
   }
 
-  Point clone() {
+  PolyLine clone() {
     return copyWith(
       type: type,
       coordinates: coordinates,
     );
   }
 
-  static Point fromMap(dynamic data) {
-    return Point(
+  static PolyLine fromMap(dynamic data) {
+    return PolyLine(
       type: data[typeKey],
-      coordinates: data[coordinatesKey].cast<double>(),
+      coordinates: List.from((data[coordinatesKey] as List).map<List<double>>((item) => item.cast<double>())),
     );
   }
 
@@ -69,7 +69,7 @@ class Point extends Equatable {
     }..removeWhere((key, value) => value == null);
   }
 
-  static Point fromJson(String source) {
+  static PolyLine fromJson(String source) {
     return fromMap(jsonDecode(source));
   }
 
