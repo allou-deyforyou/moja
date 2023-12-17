@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
-import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:maplibre_gl/mapbox_gl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:widget_tools/widget_tools.dart';
 import 'package:listenable_tools/listenable_tools.dart';
 
@@ -18,18 +19,32 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   /// Assets
-  Account? _currentAccount;
   late final BuildContext _scaffoldContext;
+  late final PageStorageBucket _pageStorageBucket;
+
   late ValueNotifier<bool> _myLocationController;
   late AnimationController _pinAnimationController;
+
+  Account? _currentAccount;
 
   void _afterLayout(BuildContext context) {
     _scaffoldContext = context;
     _showLocationWidget();
   }
 
-  void _animatePin() {
-    _pinAnimationController.repeat(min: 0.15, max: 1.0);
+  void _loadPin() async {
+    await _pinAnimationController.animateTo(0.6);
+    _pinAnimationController.repeat(min: 0.7, max: 0.8);
+  }
+
+  void _startPin() {
+    _pinAnimationController
+      ..reset()
+      ..animateTo(0.4);
+  }
+
+  void _stopPin() {
+    _pinAnimationController.animateTo(0.0);
   }
 
   void _resetPin() {
@@ -83,23 +98,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   UserLocation? _userLocation;
   LatLng? _centerPosition;
 
+  late double _mapPadding;
+  late double _zoom;
+  late double _tilt;
+
   void _onMapCreated(MaplibreMapController controller) async {
     _mapController = controller;
+
+    _goToMyPosition();
   }
 
   Future<void> _onStyleLoadedCallback() async {
-    double bottom = context.mediaQuery.padding.bottom;
-
     await Future.wait([
-      _mapController!.updateContentInsets(EdgeInsets.only(
-        bottom: bottom + kBottomNavigationBarHeight * 3,
-        right: 16.0,
-        left: 16.0,
-      )),
+      _updateContentInsets(),
       _loadImages(),
     ]);
+    if (_relays != null) {
+      _addRelayMaplibre(_relays!);
+    } else if (_currentRelay != null && _routes != null) {
+      _addRelayMaplibre([_currentRelay!]);
+      _drawLines(_routes!);
+    }
 
     _goToMyPosition();
+  }
+
+  Future<void> _updateContentInsets() {
+    return _mapController!.updateContentInsets(EdgeInsets.only(
+      bottom: _mapPadding,
+      right: 16.0,
+      left: 16.0,
+    ));
   }
 
   Future<void> _clearMap() {
@@ -117,50 +146,82 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  void _onMapIdle() {
+  void _onMapMoved() {
+    _startPin();
     _myLocationController.value = false;
-    _centerPosition = _mapController!.cameraPosition!.target;
   }
 
+  void _onMapIdle() {
+    _stopPin();
+    _centerPosition = _mapController!.cameraPosition!.target;
+
+    _searchPlace(_centerPosition!);
+  }
+
+  void _onCameraIdle() {}
+
   void _onUserLocationUpdated(UserLocation location) {
-    if (_myLocationController.value) _goToPosition(location.position);
+    if (_myLocationController.value) {
+      _goToPosition(
+        location.position,
+        bearing: switch (_currentRelay) {
+          Relay() => _userLocation?.bearing ?? 0.0,
+          _ => 0.0,
+        },
+      );
+    }
     _userLocation = location;
   }
 
-  void _goToPosition(
-    LatLng position, {
-    double zoom = 16.0,
-    double bearing = 0.0,
-  }) {
+  Future<void> _setZoom(double zoom) async {
+    if (_mapController == null) return;
+    _zoom = zoom;
+    await _mapController!.animateCamera(
+      CameraUpdate.zoomBy(zoom),
+    );
+  }
+
+  Future<void> _setTitl(double tilt) async {
+    if (_mapController == null) return;
+    _tilt = tilt;
+    await _mapController!.animateCamera(
+      CameraUpdate.tiltTo(tilt),
+    );
+  }
+
+  void _goToPosition(LatLng position, {double bearing = 0.0}) {
     if (_mapController == null) return;
 
     _mapController!.animateCamera(
       CameraUpdate.newCameraPosition(CameraPosition(
-        target: position,
         bearing: bearing,
-        tilt: 60.0,
-        zoom: zoom,
+        target: position,
+        tilt: _tilt,
+        zoom: _zoom,
       )),
     );
   }
 
   void _goToMyPosition() async {
     if (_userLocation == null) return;
-
+    _startPin();
     _myLocationController.value = true;
 
     _centerPosition = _userLocation!.position;
-    final heading = _userLocation!.heading?.trueHeading;
+    final bearing = _userLocation!.bearing ?? 0.0;
+    _goToPosition(_centerPosition!, bearing: bearing);
 
     _searchPlace(_centerPosition!);
-
-    _goToPosition(_centerPosition!, bearing: heading ?? 0.0);
   }
 
   Future<void> _addRelayMaplibre(List<Relay> relays) async {
+    final theme = context.theme;
+
     await _clearMap();
     await _mapController!.addSymbols(List.of(relays.map((item) {
       return SymbolOptions(
+        textHaloColor: theme.colorScheme.surface.toHexStringRGB(),
+        textColor: theme.colorScheme.onSurface.toHexStringRGB(),
         geometry: _placeToLatLng(item.location),
         iconImage: Assets.images.pin2.keyName,
         iconOffset: const Offset(0.0, -20.0),
@@ -175,7 +236,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     for (final route in routes) {
       await _mapController!.addLine(options.copyWith(LineOptions(
           geometry: route.coordinates!.expand((coordinate) {
-        return [LatLng(coordinate[0], coordinate[1])];
+        return [LatLng(coordinate[1], coordinate[0])];
       }).toList())));
     }
   }
@@ -186,12 +247,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   void _listenPlaceState(BuildContext context, AsyncState state) {
     if (state is PendingState) {
-      return _animatePin();
+      return _loadPin();
     } else if (state case SuccessState<Place>(:final data)) {
       _currentPlace = data;
-      _goToPosition(_placeToLatLng(_currentPlace)!);
+      // _goToPosition(_placeToLatLng(_currentPlace)!);
     }
-    return _resetPin();
+    _resetPin();
   }
 
   void _searchPlace(LatLng position) {
@@ -203,12 +264,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   /// RelayService
   late final AsyncController<AsyncState> _relayController;
+  List<Relay>? _relays;
+  Relay? _currentRelay;
 
-  void _listenRelayState(BuildContext context, AsyncState state) {
+  void _listenRelayState(BuildContext context, AsyncState state) async {
     if (state case SuccessState<List<Relay>>(:final data)) {
       _addRelayMaplibre(data);
-    } else if (state case FailureState<SelectAccountEvent>(:final code)) {
-      switch (code) {}
+      _relays = data;
     }
   }
 
@@ -220,12 +282,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   /// RouteService
   late AsyncController<AsyncState> _routeController;
+  List<PolyLine>? _routes;
 
   void _listenRouteState(BuildContext context, AsyncState state) {
     if (state case SuccessState<List<PolyLine>>(:final data)) {
       _drawLines(data);
-    } else if (state case FailureState<SelectAccountEvent>(:final code)) {
-      switch (code) {}
+      _routes = data;
+    } else if (state case FailureState<GetRouteEvent>(:final code)) {
+      switch (code) {
+        default:
+          showSnackBar(
+            context: context,
+            text: 'Le traçage a échoué',
+          );
+      }
     }
   }
 
@@ -245,11 +315,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     super.initState();
 
     /// Assets
+    _pageStorageBucket = PageStorageBucket();
     _myLocationController = ValueNotifier(true);
     _pinAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 3000),
+      duration: const Duration(milliseconds: 2000),
       vsync: this,
+      value: 0.0,
     );
+
+    /// MapLibre
+    _mapPadding = 0.0;
+    _zoom = 16.0;
+    _tilt = 0.0;
 
     /// PlaceService
     _placeController = AsyncController(const InitState());
@@ -259,11 +336,48 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   VoidCallback _callRelayModal(Relay item) {
-    return () {};
+    return () {
+      showCupertinoModalPopup(
+        context: context,
+        builder: (context) {
+          return HomeRelayCallModal(
+            relay: item.name,
+            onCall: () {
+              launchUrl(Uri(
+                path: item.contacts!.first,
+                scheme: 'tel',
+              ));
+            },
+          );
+        },
+      );
+    };
   }
 
   VoidCallback _openRelaySheet(Relay item) {
     return () async {
+      final mediaQuery = context.mediaQuery;
+      final height = mediaQuery.size.height;
+      final bottom = mediaQuery.padding.bottom;
+      final sheetHeight = bottom + kBottomNavigationBarHeight * 3.0;
+      _mapPadding = -((height / 2) - sheetHeight);
+
+      _relays = null;
+      _currentRelay = item;
+      _myLocationController.value = true;
+
+      if (_mapController != null) {
+        await Future.wait([
+          _updateContentInsets(),
+          _setZoom(18.0),
+          _setTitl(40.0),
+          _clearMap(),
+        ]);
+
+        _addRelayMaplibre([item]);
+      }
+      if (!mounted) return;
+
       _routeController = AsyncController(const InitState());
       _getRoute(item);
 
@@ -276,9 +390,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ControllerListener(
                   listener: _listenRouteState,
                   controller: _routeController,
-                  child: HomeAccountItemWidget(
+                  child: HomeRelayItemWidget(
+                    onCallPressed: _callRelayModal(item),
                     location: item.location!.title,
-                    onCall: _callRelayModal(item),
                     image: item.image,
                     name: item.name,
                   ),
@@ -310,13 +424,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         },
       );
 
-      await _clearMap();
-
       _openAccountListView();
     };
   }
 
   void _openAccountListView() async {
+    final mediaQuery = context.mediaQuery;
+    _mapPadding = mediaQuery.size.height * 0.5;
+
+    _routes = null;
+    _currentRelay = null;
+
+    if (_mapController != null) {
+      await Future.wait([
+        _updateContentInsets(),
+        _setZoom(14.0),
+        _setTitl(0.0),
+        _clearMap(),
+      ]);
+    }
+    if (!mounted) return;
+
     await showCustomBottomSheet(
       context: _scaffoldContext,
       builder: (context) {
@@ -334,38 +462,44 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 cashin: cashin,
               ),
             ),
-            const SliverPadding(
-              padding: kMaterialListPadding,
-              sliver: SliverToBoxAdapter(child: Divider()),
-            ),
             ControllerConsumer(
+              autoListen: true,
               listener: _listenRelayState,
               controller: _relayController,
               builder: (context, state, child) {
                 return switch (state) {
                   PendingState() => const SliverFillRemaining(
                       hasScrollBody: false,
-                      child: HomeAccountLoadingListView(),
+                      child: HomeRelayLoadingListView(),
                     ),
-                  SuccessState<List<Relay>>(:final data) => SliverVisibility(
-                      visible: data.isNotEmpty,
-                      replacementSliver: const SliverFillRemaining(
-                        hasScrollBody: false,
-                      ),
-                      sliver: SliverList.builder(
-                        itemCount: data.length,
-                        itemBuilder: (context, index) {
-                          final item = data[index];
-                          return HomeAccountItemWidget(
-                            location: item.location!.title,
-                            onCall: _callRelayModal(item),
-                            onTap: _openRelaySheet(item),
-                            image: item.image,
-                            name: item.name,
-                          );
-                        },
-                      ),
+                  SuccessState<List<Relay>>(:final data) => SliverList.builder(
+                      itemCount: data.length,
+                      itemBuilder: (context, index) {
+                        final item = data[index];
+                        return HomeRelayItemWidget(
+                          location: item.location!.title,
+                          onCallPressed: _callRelayModal(item),
+                          onTap: _openRelaySheet(item),
+                          image: item.image,
+                          name: item.name,
+                        );
+                      },
                     ),
+                  FailureState<SelectRelayEvent>(:final code, :final event) => switch (code) {
+                      'no-record' => SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: HomeRelayNoFound(
+                            account: _currentAccount!.name,
+                            cashin: cashin,
+                          ),
+                        ),
+                      _ => SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: HomeRelayError(
+                            onTry: () => _relayController.run(event!),
+                          ),
+                        ),
+                    },
                   _ => const SliverToBoxAdapter(),
                 };
               },
@@ -375,12 +509,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       },
     );
 
-    await _mapController!.clearSymbols();
-
     _showLocationWidget();
   }
 
   void _showLocationWidget() async {
+    final mediaQuery = context.mediaQuery;
+    final bottom = mediaQuery.padding.bottom;
+    _mapPadding = bottom + kBottomNavigationBarHeight * 3.0;
+
+    if (_mapController != null) {
+      await Future.wait([
+        _updateContentInsets(),
+        _setZoom(16.0),
+        _clearMap(),
+      ]);
+    }
+    if (!mounted) return;
+
     await showCustomBottomSheet(
       context: _scaffoldContext,
       builder: (context) {
@@ -428,7 +573,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _showLocationWidget();
   }
 
-  Future<Iterable<Widget>> _suggestionsBuilder(BuildContext context, SearchController controller) async {
+  Future<Iterable<Widget>> _suggestionsBuilder(
+    BuildContext context,
+    SearchController controller,
+  ) async {
     if (_userLocation == null || controller.text.isEmpty) return const [];
 
     final position = _userLocation!.position;
@@ -438,14 +586,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     ));
     return data.then((places) {
       return places.map((item) {
-        return ListTile(
+        return HomeLocationItemWidget(
           onTap: () {
+            _myLocationController.value = false;
             _placeController.value = SuccessState(item);
             Navigator.pop(context);
           },
-          leading: const Icon(CupertinoIcons.location_solid),
-          subtitle: Text(item.subtitle),
-          title: Text(item.title),
+          subtitle: item.subtitle,
+          title: item.title,
         );
       });
     });
@@ -453,34 +601,50 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      resizeToAvoidBottomInset: false,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerTop,
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          HomeMenuButton(
-            onPressed: _openMenuScreen,
+    return PageStorage(
+      bucket: _pageStorageBucket,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        resizeToAvoidBottomInset: false,
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerTop,
+        floatingActionButton: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            HomeMenuButton(
+              onPressed: _openMenuScreen,
+            ),
+            ValueListenableBuilder(
+              valueListenable: _myLocationController,
+              builder: (context, active, child) {
+                return HomeLocationButton(
+                  onPressed: _goToMyPosition,
+                  active: active,
+                );
+              },
+            ),
+          ],
+        ),
+        body: AfterLayout(
+          afterLayout: _afterLayout,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ProfileLocationMap(
+                onMapIdle: _onMapIdle,
+                onMapMoved: _onMapMoved,
+                onCameraIdle: _onCameraIdle,
+                onMapCreated: _onMapCreated,
+                onStyleLoadedCallback: _onStyleLoadedCallback,
+                onUserLocationUpdated: _onUserLocationUpdated,
+              ),
+              Positioned.fill(
+                bottom: 100.0,
+                child: ProfileLocationPin(
+                  controller: _pinAnimationController,
+                ),
+              ),
+            ],
           ),
-          ValueListenableBuilder(
-            valueListenable: _myLocationController,
-            builder: (context, active, child) {
-              return HomeLocationButton(
-                onPressed: _goToMyPosition,
-                active: active,
-              );
-            },
-          ),
-        ],
-      ),
-      body: AfterLayout(
-        afterLayout: _afterLayout,
-        child: ProfileLocationMap(
-          onMapIdle: _onMapIdle,
-          onMapCreated: _onMapCreated,
-          onStyleLoadedCallback: _onStyleLoadedCallback,
-          onUserLocationUpdated: _onUserLocationUpdated,
         ),
       ),
     );

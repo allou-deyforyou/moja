@@ -1,12 +1,11 @@
 import 'dart:async';
 
+import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
-import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:maplibre_gl/mapbox_gl.dart';
 import 'package:widget_tools/widget_tools.dart';
 
 import '_widget.dart';
@@ -84,6 +83,31 @@ class HomeLocationButton extends StatelessWidget {
   }
 }
 
+class ProfileLocationPin extends StatelessWidget {
+  const ProfileLocationPin({
+    super.key,
+    required this.controller,
+  });
+  final Animation<double> controller;
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SizedBox.square(
+        dimension: 50.0,
+        child: Transform.scale(
+          scale: 4.0,
+          child: LottieBuilder.asset(
+            Assets.images.mylocation2,
+            controller: controller,
+            fit: BoxFit.contain,
+            animate: false,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class ProfileLocationMap extends StatefulWidget {
   const ProfileLocationMap({
     super.key,
@@ -116,6 +140,7 @@ class ProfileLocationMap extends StatefulWidget {
 
 class _ProfileLocationMapState extends State<ProfileLocationMap> {
   late String _mapStyle;
+  late SystemUiOverlayStyle _barStyle;
 
   ValueChanged<PointerUpEvent>? _onMapIdle() {
     if (widget.onMapIdle == null) return null;
@@ -130,22 +155,24 @@ class _ProfileLocationMapState extends State<ProfileLocationMap> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _mapStyle = switch (CupertinoTheme.brightnessOf(context)) {
-      Brightness.light => 'https://api.maptiler.com/maps/streets-v2/style.json?key=ohdDnBihXL3Yk2cDRMfO',
-      Brightness.dark => 'https://api.maptiler.com/maps/streets-v2-dark/style.json?key=ohdDnBihXL3Yk2cDRMfO',
-    };
+    switch (CupertinoTheme.brightnessOf(context)) {
+      case Brightness.light:
+        _mapStyle = 'https://api.maptiler.com/maps/streets-v2/style.json?key=ohdDnBihXL3Yk2cDRMfO';
+        _barStyle = SystemUiOverlayStyle.dark.copyWith(statusBarColor: Colors.transparent);
+        break;
+      case Brightness.dark:
+        _mapStyle = 'https://api.maptiler.com/maps/streets-v2-dark/style.json?key=ohdDnBihXL3Yk2cDRMfO';
+        _barStyle = SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent);
+        break;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final style = switch (CupertinoTheme.brightnessOf(context)) {
-      Brightness.light => SystemUiOverlayStyle.dark.copyWith(statusBarColor: Colors.transparent),
-      Brightness.dark => SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
-    };
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      sized: false,
-      value: style,
-      child: CustomKeepAlive(
+    return CustomKeepAlive(
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        sized: false,
+        value: _barStyle,
         child: Listener(
           onPointerUp: _onMapIdle(),
           onPointerDown: _onMapMoved(),
@@ -158,9 +185,9 @@ class _ProfileLocationMapState extends State<ProfileLocationMap> {
             onMapCreated: widget.onMapCreated,
             onMapLongClick: widget.onMapLongClick,
             myLocationEnabled: widget.myLocationEnabled,
+            myLocationRenderMode: MyLocationRenderMode.COMPASS,
             onUserLocationUpdated: widget.onUserLocationUpdated,
             onStyleLoadedCallback: widget.onStyleLoadedCallback ?? () {},
-            gestureRecognizers: {Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer())},
             initialCameraPosition: switch (widget.center) {
               null => const CameraPosition(target: LatLng(0.0, 0.0)),
               _ => CameraPosition(target: widget.center!, zoom: 18.0),
@@ -234,6 +261,31 @@ class HomeLocationWidget extends StatelessWidget {
         child: child,
       ),
       child: child,
+    );
+  }
+}
+
+class HomeLocationItemWidget extends StatelessWidget {
+  const HomeLocationItemWidget({
+    super.key,
+    this.onTap,
+    this.subtitle,
+    required this.title,
+  });
+  final String title;
+  final String? subtitle;
+  final VoidCallback? onTap;
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    return ListTile(
+      titleTextStyle: theme.textTheme.titleMedium!.copyWith(
+        fontWeight: FontWeight.w600,
+      ),
+      onTap: onTap,
+      leading: const Icon(CupertinoIcons.location_solid),
+      subtitle: subtitle != null ? Text(subtitle!) : null,
+      title: Text(title),
     );
   }
 }
@@ -466,6 +518,7 @@ class HomeSliverBottomSheet extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 child: CustomScrollView(
                   controller: scrollController,
+                  key: const PageStorageKey('relay-page'),
                   slivers: [
                     SliverMainAxisGroup(slivers: slivers),
                     const SliverSafeArea(
@@ -504,6 +557,7 @@ class HomeAccountAppBar extends StatelessWidget {
       backgroundColor: theme.colorScheme.surface,
       foregroundColor: theme.colorScheme.onSurface,
       surfaceTintColor: theme.colorScheme.surfaceTint,
+      shape: Border(bottom: BorderSide(color: theme.colorScheme.outlineVariant)),
       title: DefaultTextStyle.merge(
         style: theme.textTheme.headlineMedium!.copyWith(
           fontFamily: FontFamily.avenirNext,
@@ -519,7 +573,7 @@ class HomeAccountAppBar extends StatelessWidget {
         preferredSize: const Size.fromHeight(kMinInteractiveDimension),
         child: Container(
           alignment: Alignment.center,
-          padding: kTabLabelPadding.copyWith(bottom: 6.0),
+          margin: kTabLabelPadding.copyWith(bottom: 8.0),
           height: kMinInteractiveDimension * 1.2,
           child: bottom,
         ),
@@ -561,6 +615,8 @@ class HomeAccountSelectedWidget extends StatelessWidget {
         ),
       ),
       title: DefaultTextStyle.merge(
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: theme.textTheme.titleMedium!.copyWith(
           fontWeight: FontWeight.w600,
           letterSpacing: 0.0,
@@ -581,29 +637,39 @@ class HomeAccountSelectedWidget extends StatelessWidget {
   }
 }
 
-class HomeAccountItemWidget extends StatelessWidget {
-  const HomeAccountItemWidget({
+class HomeRelayItemWidget extends StatelessWidget {
+  const HomeRelayItemWidget({
     super.key,
     required this.name,
     required this.image,
     required this.location,
     this.onTap,
-    this.onCall,
+    this.onCallPressed,
   });
   final String name;
   final String? image;
   final String location;
   final VoidCallback? onTap;
-  final VoidCallback? onCall;
+  final VoidCallback? onCallPressed;
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
+    final localizations = context.localizations;
     return CustomListTile(
       onTap: onTap,
-      height: kMinInteractiveDimension * 1.5,
-      leading: CircleAvatar(
-        backgroundColor: theme.colorScheme.surfaceVariant,
-        child: const Icon(Icons.storefront),
+      height: kMinInteractiveDimension * 1.8,
+      leading: CustomAvatarWrapper(
+        radius: 25.0,
+        content: switch (image) {
+          String() => CustomAvatarWidget(
+              cached: false,
+              imageUrl: image,
+            ),
+          _ => Icon(
+              color: theme.colorScheme.onSurfaceVariant,
+              Icons.storefront,
+            ),
+        },
       ),
       title: DefaultTextStyle.merge(
         style: theme.textTheme.titleMedium!.copyWith(
@@ -611,7 +677,7 @@ class HomeAccountItemWidget extends StatelessWidget {
           fontWeight: FontWeight.w600,
           letterSpacing: 0.0,
           fontSize: 18.0,
-          height: 1.2,
+          height: 1.5,
         ),
         child: Text(name),
       ),
@@ -619,7 +685,7 @@ class HomeAccountItemWidget extends StatelessWidget {
         style: theme.textTheme.titleMedium!.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
           letterSpacing: 0.0,
-          height: 1.5,
+          height: 1.2,
         ),
         child: Text(location),
       ),
@@ -629,15 +695,89 @@ class HomeAccountItemWidget extends StatelessWidget {
           textStyle: theme.textTheme.titleMedium,
           side: BorderSide(color: theme.colorScheme.primary),
         ),
-        onPressed: onCall,
-        child: const Text("Appeler"),
+        onPressed: onCallPressed,
+        child: Text(localizations.call.capitalize()),
       ),
     );
   }
 }
 
-class HomeAccountLoadingListView extends StatelessWidget {
-  const HomeAccountLoadingListView({super.key});
+class HomeRelayNoFound extends StatelessWidget {
+  const HomeRelayNoFound({
+    super.key,
+    required this.cashin,
+    required this.account,
+  });
+  final bool cashin;
+  final String account;
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final localizations = context.localizations;
+    return Container(
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(26.0),
+      child: DefaultTextStyle.merge(
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+          letterSpacing: -0.5,
+          fontSize: 24.0,
+          height: 1.2,
+        ),
+        child: Visibility(
+          visible: cashin,
+          replacement: Text(
+            localizations.nowithdrawpoint(account).capitalize(),
+          ),
+          child: Text(
+            localizations.nodepositpoint(account).capitalize(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class HomeRelayError extends StatelessWidget {
+  const HomeRelayError({
+    super.key,
+    required this.onTry,
+  });
+  final VoidCallback? onTry;
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final localizations = context.localizations;
+    return Container(
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(26.0),
+      child: DefaultTextStyle.merge(
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+          letterSpacing: -0.5,
+          fontSize: 24.0,
+          height: 1.2,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(localizations.loadingfailed.capitalize()),
+            TextButton(
+              onPressed: onTry,
+              style: TextButton.styleFrom(textStyle: theme.textTheme.titleMedium),
+              child: Text(localizations.clicktryagain.capitalize()),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class HomeRelayLoadingListView extends StatelessWidget {
+  const HomeRelayLoadingListView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -662,11 +802,14 @@ class HomeAccountLoadingListView extends StatelessWidget {
         children: List.filled(
           4,
           CustomListTile(
-            height: kMinInteractiveDimension * 1.4,
+            height: kMinInteractiveDimension * 1.8,
             title: textWidget,
             subtitle: textWidget,
             trailing: const SizedBox.shrink(),
-            leading: CircleAvatar(backgroundColor: color),
+            leading: CircleAvatar(
+              backgroundColor: color,
+              radius: 25.0,
+            ),
           ),
         ),
       ),
@@ -693,6 +836,64 @@ class HomeAccountBottomSheet extends StatelessWidget {
           child: content,
         ),
       ],
+    );
+  }
+}
+
+class HomeRelayCallModal extends StatelessWidget {
+  const HomeRelayCallModal({
+    super.key,
+    required this.relay,
+    required this.onCall,
+  });
+  final String relay;
+  final VoidCallback onCall;
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final localizations = context.localizations;
+    return CupertinoActionSheet(
+      // title: DefaultTextStyle.merge(
+      //   style: theme.textTheme.titleSmall!.copyWith(
+      //     fontWeight: FontWeight.w600,
+      //     height: 1.2,
+      //   ),
+      //   child: Text(relay),
+      // ),
+      message: DefaultTextStyle.merge(
+        style: theme.textTheme.titleMedium!.copyWith(height: 1.2),
+        child: Text.rich(TextSpan(children: [
+          const TextSpan(text: "Vous êtes sur le point d'appeler chez\n"),
+          TextSpan(
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            text: relay,
+          ),
+        ])),
+      ),
+      actions: [
+        CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: onCall,
+          child: DefaultTextStyle.merge(
+            style: theme.textTheme.titleLarge!.copyWith(
+              color: theme.colorScheme.primary,
+              height: 1.2,
+            ),
+            child: Text(localizations.call.capitalize()),
+          ),
+        ),
+      ],
+      cancelButton: CupertinoActionSheetAction(
+        isDestructiveAction: true,
+        onPressed: Navigator.of(context).pop,
+        child: DefaultTextStyle.merge(
+          style: theme.textTheme.titleLarge!.copyWith(
+            color: CupertinoColors.destructiveRed,
+            height: 1.2,
+          ),
+          child: Text(localizations.cancel.capitalize()),
+        ),
+      ),
     );
   }
 }

@@ -26,8 +26,8 @@
     },
     "moneywithdraw": "money withdraw",
     "moneydeposit": "money deposit",
-    "moneywithdrawfrom": "money withdraw from {name}",
-    "@moneywithdrawfrom": {
+    "nowithdrawpoint": "no {name} withdraw point found",
+    "@nowithdrawpoint": {
         "placeholders": {
             "name": {
                 "type": "String",
@@ -35,8 +35,8 @@
             }
         }
     },
-    "moneydepositat": "money deposit at {name}",
-    "@moneydepositat": {
+    "nodepositpoint": "no {name} deposit point found",
+    "@nodepositpoint": {
         "placeholders": {
             "name": {
                 "type": "String",
@@ -63,5 +63,9 @@
     "apply": "apply",
     "cancel": "cancel",
     "searchpoint": "search point",
-    "loading": "loading"
+    "loading": "loading",
+    "call": "call",
+    "loadingfailed": "loading failed",
+    "clicktryagain": "click to try again",
+    "tryagain": "try again"
 }

@@ -23,7 +23,7 @@ dependencies:
   maplibre_gl:
     git:
       url: https://github.com/maplibre/flutter-maplibre-gl.git
-      ref: main
+      ref: 0.16.0
   shimmer:
   lottie:
   # Services
@@ -35,8 +35,6 @@ dependencies:
   hive_flutter:
   url_launcher:
   share_plus:
-  archive:
-  http:
   hive:
   dio:
 

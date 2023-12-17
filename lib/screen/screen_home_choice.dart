@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:listenable_tools/listenable_tools.dart';
-import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:maplibre_gl/mapbox_gl.dart';
 
 import '_screen.dart';
 
@@ -58,10 +58,13 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
 
   Future<void> _selectAccount() {
     return _accountController.run(
-      SelectAccountEvent(position: (
-        latitude: _currentPosition.latitude,
-        longitude: _currentPosition.longitude,
-      )),
+      SelectAccountEvent(
+        relay: _currentRelay,
+        position: (
+          latitude: _currentPosition.latitude,
+          longitude: _currentPosition.longitude,
+        ),
+      ),
     );
   }
 
@@ -76,7 +79,10 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
     _relayAccounts = List.empty(growable: true);
 
     /// AccountService
-    _accountController = currentAccounts;
+    _accountController = switch (_currentRelay) {
+      Relay() => AsyncController<AsyncState>(const InitState()),
+      _ => currentAccounts,
+    };
   }
 
   @override
@@ -112,6 +118,14 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
                       );
                     },
                   ),
+                FailureState<SelectAccountEvent>(:final code, :final event) => switch (code) {
+                    _ => SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: HomeChoiceError(
+                          onTry: () => _accountController.run(event!),
+                        ),
+                      ),
+                  },
                 _ => const SliverToBoxAdapter(),
               };
             },

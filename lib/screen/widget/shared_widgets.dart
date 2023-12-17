@@ -1,9 +1,26 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:widget_tools/widget_tools.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '_widget.dart';
+
+void showSnackBar({
+  required BuildContext context,
+  required String text,
+  Color? backgroundColor,
+  VoidCallback? onTry,
+}) {
+  final localizations = context.localizations;
+
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    action: onTry != null ? SnackBarAction(label: localizations.tryagain.capitalize(), onPressed: onTry) : null,
+    behavior: SnackBarBehavior.floating,
+    backgroundColor: backgroundColor,
+    showCloseIcon: true,
+    content: Text(text),
+  ));
+}
 
 class DialogPage<T> extends Page<T> {
   const DialogPage({
@@ -256,8 +273,8 @@ class CustomAvatarProgressIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Center(
       child: CustomProgressIndicator(
-        strokeWidth: 4.0,
-        radius: 35.0,
+        strokeWidth: 2.0,
+        radius: 12.0,
       ),
     );
   }
@@ -267,16 +284,40 @@ class CustomAvatarWidget extends StatelessWidget {
   const CustomAvatarWidget({
     super.key,
     required this.imageUrl,
+    this.cached = true,
+    this.onTap,
   });
+  final bool cached;
   final String? imageUrl;
+  final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
-    return CachedNetworkImage(
-      fit: BoxFit.cover,
-      imageUrl: imageUrl!,
-      placeholder: (context, url) {
-        return const CustomAvatarProgressIndicator();
-      },
+    return CupertinoButton(
+      onPressed: onTap,
+      padding: EdgeInsets.zero,
+      child: SizedBox.expand(
+        child: Visibility(
+          visible: cached,
+          replacement: Image.network(
+            imageUrl!,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, result) {
+              return Visibility(
+                visible: result?.cumulativeBytesLoaded == result?.expectedTotalBytes,
+                replacement: const CustomAvatarProgressIndicator(),
+                child: child,
+              );
+            },
+          ),
+          child: CachedNetworkImage(
+            fit: BoxFit.cover,
+            imageUrl: imageUrl!,
+            placeholder: (context, url) {
+              return const CustomAvatarProgressIndicator();
+            },
+          ),
+        ),
+      ),
     );
   }
 }

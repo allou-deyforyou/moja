@@ -79,6 +79,43 @@ class HomeChoiceCard extends StatelessWidget {
   }
 }
 
+class HomeChoiceError extends StatelessWidget {
+  const HomeChoiceError({
+    super.key,
+    required this.onTry,
+  });
+  final VoidCallback? onTry;
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final localizations = context.localizations;
+    return Container(
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(26.0),
+      child: DefaultTextStyle.merge(
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+          letterSpacing: -0.5,
+          fontSize: 24.0,
+          height: 1.2,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(localizations.loadingfailed.capitalize()),
+            TextButton(
+              onPressed: onTry,
+              style: TextButton.styleFrom(textStyle: theme.textTheme.titleMedium),
+              child: Text(localizations.clicktryagain.capitalize()),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class HomeChoiceLoadingListView extends StatelessWidget {
   const HomeChoiceLoadingListView({super.key});
 

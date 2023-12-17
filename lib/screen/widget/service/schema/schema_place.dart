@@ -41,13 +41,16 @@ class Place extends Equatable {
     return words.toSet().toList().reversed.join(' ');
   }
 
-  String get subtitle {
+  String? get subtitle {
     List<String> words = (country ?? '').split(' ');
     if (state != null) {
       words.insertAll(0, state!.split(' '));
     }
     words = List.of(words.reversed);
-    return words.toSet().toList().reversed.join(' ');
+    final result = words.toSet().toList().reversed.join(' ');
+
+    if (result.trimSpace().isEmpty) return null;
+    return result;
   }
 
   @override

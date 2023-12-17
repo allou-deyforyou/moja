@@ -21,7 +21,15 @@ class GetRouteEvent extends AsyncEvent<AsyncState> {
       final responses = await sql('fn::get_route($sourceQuery, $destinationQuery);');
 
       final List response = responses.first;
-      final data = List.of(response.map((data) => PolyLine.fromMap(data)));
+      var data = List.of(response.map((data) => PolyLine.fromMap(data)));
+
+      data = List.of(data.map(
+        (item) => item.copyWith(
+          coordinates: item.coordinates!
+            ..insert(0, [source.longitude, source.latitude])
+            ..add([destination.longitude, destination.latitude]),
+        ),
+      ));
 
       emit(SuccessState(data));
     } catch (error) {

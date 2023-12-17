@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:listenable_tools/listenable_tools.dart';
 
 import '_screen.dart';
 
@@ -31,7 +32,41 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
   }
 
   void _onSubmitted() {
-    context.pop(_currentAccount.copyWith(amount: _amount));
+    final account = _currentAccount.copyWith(amount: _amount);
+    if (_currentRelay != null) {
+      _getRelay(account);
+    } else {
+      context.pop(account);
+    }
+  }
+
+  /// RelayService
+  late final AsyncController<AsyncState> _relayController;
+
+  void _listenRelayState(BuildContext context, AsyncState state) async {
+    if (state case SuccessState<List<Relay>>()) {
+      showSnackBar(
+        context: context,
+        text: 'Vous pouvez retirer ici',
+      );
+    } else if (state case FailureState<SelectRelayEvent>(:final code)) {
+      switch (code) {
+        case 'no-record':
+          showSnackBar(
+            context: context,
+            text: 'Vous ne pouvez pas retirer ici',
+          );
+          break;
+        default:
+      }
+    }
+  }
+
+  Future<void> _getRelay(Account account) {
+    return _relayController.run(SelectRelayEvent(
+      relay: _currentRelay,
+      account: account,
+    ));
   }
 
   @override
@@ -47,6 +82,9 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
       extentOffset: amount?.length ?? 0,
       baseOffset: 0,
     );
+
+    /// RelayService
+    _relayController = AsyncController<AsyncState>(const InitState());
   }
 
   @override
@@ -70,8 +108,16 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
           ),
           SliverFillRemaining(
             hasScrollBody: false,
-            child: HomeAccountSubmittedButton(
-              onPressed: _onSubmitted,
+            child: ControllerConsumer(
+              listener: _listenRelayState,
+              controller: _relayController,
+              builder: (context, state, child) {
+                VoidCallback? onPressed = _onSubmitted;
+                if (state is PendingState) onPressed = null;
+                return HomeAccountSubmittedButton(
+                  onPressed: onPressed,
+                );
+              },
             ),
           ),
         ],

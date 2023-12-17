@@ -26,8 +26,8 @@
     },
     "moneywithdraw": "retrait d'argent",
     "moneydeposit": "dépôt d'argent",
-    "moneywithdrawfrom": "retrait d'argent chez {name}",
-    "@moneywithdrawfrom": {
+    "nowithdrawpoint": "aucun point de retrait {name} trouvé",
+    "@nowithdrawpoint": {
         "placeholders": {
             "name": {
                 "type": "String",
@@ -35,8 +35,8 @@
             }
         }
     },
-    "moneydepositat": "dépôt d'argent chez {name}",
-    "@moneydepositat": {
+    "nodepositpoint": "aucun point de dépôt {name} trouvé",
+    "@nodepositpoint": {
         "placeholders": {
             "name": {
                 "type": "String",
@@ -63,5 +63,9 @@
     "apply": "appliquer",
     "cancel": "annuler",
     "searchpoint": "point de recherche",
-    "loading": "chargement"
+    "loading": "chargement",
+    "call": "appeler",
+    "loadingfailed": "échec du chargement",
+    "clicktryagain": "cliquez pour réessayer",
+    "tryagain": "réessayer"
 }
