@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:widget_tools/widget_tools.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -316,6 +317,42 @@ class CustomAvatarWidget extends StatelessWidget {
               return const CustomAvatarProgressIndicator();
             },
           ),
+        ),
+      ),
+    );
+  }
+}
+
+const customBannerAd = AdSize(width: 640, height: 60);
+class CustomBannerAdWidget extends StatelessWidget {
+  const CustomBannerAdWidget({
+    super.key,
+    this.width,
+    this.height,
+    this.loaded = false,
+    required this.ad,
+  });
+  final double? width;
+  final double? height;
+  final bool loaded;
+  final AdWithView ad;
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      transitionBuilder: (child, animation) {
+        return SizeTransition(
+          sizeFactor: animation,
+          child: child,
+        );
+      },
+      child: Visibility(
+        key: ValueKey(loaded),
+        visible: loaded,
+        child: SizedBox(
+          width: width ?? double.maxFinite,
+          height: height ?? customBannerAd.height.toDouble(),
+          child: AdWidget(ad: ad),
         ),
       ),
     );

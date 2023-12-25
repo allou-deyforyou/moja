@@ -1,7 +1,11 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:maplibre_gl/mapbox_gl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:widget_tools/widget_tools.dart';
@@ -24,27 +28,60 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   late ValueNotifier<bool> _myLocationController;
   late AnimationController _pinAnimationController;
+  late ValueNotifier<double?> _pinVisibilityController;
 
   Account? _currentAccount;
+
+  Timer? _interstitialAdTimer;
+  late Duration _interstitialAdTimeout;
+  InterstitialAd? _interstitialAd;
+
+  late ValueNotifier<bool> _bannerAdLoaded;
+  late int _bannerAdIndex;
+  BannerAd? _bannerAd;
 
   void _afterLayout(BuildContext context) {
     _scaffoldContext = context;
     _showLocationWidget();
   }
 
-  void _loadPin() async {
-    await _pinAnimationController.animateTo(0.6);
+  void _loadInterstitialAd() {
+    InterstitialAd.load(
+      request: const AdRequest(),
+      adUnitId: AdMobConfig.homeInterstitialAd,
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdFailedToLoad: (err) {},
+        onAdLoaded: (ad) {
+          _interstitialAd = ad;
+        },
+      ),
+    );
+  }
+
+  void _loadBannerAd() {
+    _bannerAd = BannerAd(
+      size: AdSize.fullBanner,
+      request: const AdRequest(),
+      adUnitId: AdMobConfig.choiceAdBanner,
+      listener: BannerAdListener(
+        onAdFailedToLoad: (ad, err) => ad.dispose(),
+        onAdLoaded: (ad) => _bannerAdLoaded.value = true,
+      ),
+    )..load();
+  }
+
+  Future<void> _loadPin() async {
+    _pinAnimationController.value = 0.6;
     _pinAnimationController.repeat(min: 0.7, max: 0.8);
   }
 
-  void _startPin() {
-    _pinAnimationController
-      ..reset()
-      ..animateTo(0.4);
+  Future<void> _startPin() async {
+    _pinAnimationController.value = 0.1;
+    await _pinAnimationController.animateTo(0.4);
   }
 
-  void _stopPin() {
-    _pinAnimationController.animateTo(0.0);
+  Future<void> _stopPin() async {
+    await _pinAnimationController.animateTo(0.0);
   }
 
   void _resetPin() {
@@ -68,8 +105,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       final data = await context.pushNamed<Account>(
         extra: {
           HomeChoiceScreen.currentRelayKey: relay,
-          HomeChoiceScreen.currentPositionKey: _centerPosition,
           HomeChoiceScreen.currentTransactionKey: transaction,
+          HomeChoiceScreen.currentPositionKey: (
+            longitude: _centerPosition!.longitude,
+            latitude: _centerPosition!.latitude,
+          ),
         },
         HomeChoiceScreen.name,
       );
@@ -146,19 +186,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  void _onMapMoved() {
-    _startPin();
+  Future<void> _onMapMoved() async {
+    if (_pinVisibilityController.value != null) {
+      _startPin();
+    }
+
     _myLocationController.value = false;
   }
 
-  void _onMapIdle() {
-    _stopPin();
-    _centerPosition = _mapController!.cameraPosition!.target;
+  Future<void> _onMapIdle() async {
+    if (_pinVisibilityController.value != null) {
+      await _stopPin();
+      _centerPosition = _mapController!.cameraPosition!.target;
 
-    _searchPlace(_centerPosition!);
+      _searchPlace(_centerPosition!);
+    }
   }
-
-  void _onCameraIdle() {}
 
   void _onUserLocationUpdated(UserLocation location) {
     if (_myLocationController.value) {
@@ -177,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     if (_mapController == null) return;
     _zoom = zoom;
     await _mapController!.animateCamera(
-      CameraUpdate.zoomBy(zoom),
+      CameraUpdate.zoomTo(zoom),
     );
   }
 
@@ -204,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   void _goToMyPosition() async {
     if (_userLocation == null) return;
-    _startPin();
+
     _myLocationController.value = true;
 
     _centerPosition = _userLocation!.position;
@@ -243,16 +286,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   /// PlaceService
   late AsyncController<AsyncState> _placeController;
-  Place? _currentPlace;
 
   void _listenPlaceState(BuildContext context, AsyncState state) {
     if (state is PendingState) {
-      return _loadPin();
-    } else if (state case SuccessState<Place>(:final data)) {
-      _currentPlace = data;
-      // _goToPosition(_placeToLatLng(_currentPlace)!);
+      _loadPin();
+    } else {
+      _resetPin();
     }
-    _resetPin();
   }
 
   void _searchPlace(LatLng position) {
@@ -270,7 +310,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void _listenRelayState(BuildContext context, AsyncState state) async {
     if (state case SuccessState<List<Relay>>(:final data)) {
       _addRelayMaplibre(data);
-      _relays = data;
+      _relays = List.from(data);
+      _bannerAdIndex = Random().nextInt(_relays!.length);
+      _relays!.insert(_bannerAdIndex, _relays![_bannerAdIndex]);
     }
   }
 
@@ -317,22 +359,36 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     /// Assets
     _pageStorageBucket = PageStorageBucket();
     _myLocationController = ValueNotifier(true);
+    _pinVisibilityController = ValueNotifier(null);
     _pinAnimationController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
       value: 0.0,
     );
 
+    _interstitialAdTimeout = Duration.zero;
+
+    _bannerAdLoaded = ValueNotifier(false);
+    _loadBannerAd();
+
     /// MapLibre
     _mapPadding = 0.0;
     _zoom = 16.0;
-    _tilt = 0.0;
+    _tilt = 60.0;
 
     /// PlaceService
     _placeController = AsyncController(const InitState());
 
     /// RelayService
     _relayController = AsyncController(const InitState());
+  }
+
+  @override
+  void dispose() {
+    /// Assets
+    _interstitialAdTimer?.cancel();
+
+    super.dispose();
   }
 
   VoidCallback _callRelayModal(Relay item) {
@@ -365,6 +421,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       _relays = null;
       _currentRelay = item;
       _myLocationController.value = true;
+      _pinVisibilityController.value = null;
+
+      await _interstitialAd?.show();
+      _interstitialAd = null;
 
       if (_mapController != null) {
         await Future.wait([
@@ -429,11 +489,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   void _openAccountListView() async {
+    _interstitialAdTimer = Timer(_interstitialAdTimeout, () async {
+      _loadInterstitialAd();
+
+      if (_interstitialAdTimeout <= const Duration(minutes: 5)) {
+        _interstitialAdTimeout += const Duration(minutes: 1);
+      }
+    });
+
     final mediaQuery = context.mediaQuery;
     _mapPadding = mediaQuery.size.height * 0.5;
 
     _routes = null;
     _currentRelay = null;
+    _pinVisibilityController.value = null;
 
     if (_mapController != null) {
       await Future.wait([
@@ -472,16 +541,28 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       hasScrollBody: false,
                       child: HomeRelayLoadingListView(),
                     ),
-                  SuccessState<List<Relay>>(:final data) => SliverList.builder(
-                      itemCount: data.length,
+                  SuccessState<List<Relay>>() => SliverList.builder(
+                      itemCount: _relays!.length,
                       itemBuilder: (context, index) {
-                        final item = data[index];
-                        return HomeRelayItemWidget(
-                          location: item.location!.title,
-                          onCallPressed: _callRelayModal(item),
-                          onTap: _openRelaySheet(item),
-                          image: item.image,
-                          name: item.name,
+                        final item = _relays![index];
+                        return Visibility(
+                          visible: index != _bannerAdIndex,
+                          replacement: ValueListenableBuilder(
+                            valueListenable: _bannerAdLoaded,
+                            builder: (context, loaded, child) {
+                              return CustomBannerAdWidget(
+                                loaded: loaded,
+                                ad: _bannerAd!,
+                              );
+                            },
+                          ),
+                          child: HomeRelayItemWidget(
+                            location: item.location!.title,
+                            onCallPressed: _callRelayModal(item),
+                            onTap: _openRelaySheet(item),
+                            image: item.image,
+                            name: item.name,
+                          ),
                         );
                       },
                     ),
@@ -517,10 +598,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final bottom = mediaQuery.padding.bottom;
     _mapPadding = bottom + kBottomNavigationBarHeight * 3.0;
 
+    _pinVisibilityController.value = _mapPadding;
+
     if (_mapController != null) {
       await Future.wait([
         _updateContentInsets(),
         _setZoom(16.0),
+        _setTitl(60.0),
         _clearMap(),
       ]);
     }
@@ -541,7 +625,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   return HomeLocationWidget(
                     suggestionsBuilder: _suggestionsBuilder,
                     title: switch (state) {
-                      SuccessState<Place>(:final data) => data.title,
+                      SuccessState<Place>(:final data) => Text(data.title),
+                      FailureState() => const Text(
+                          style: TextStyle(color: CupertinoColors.destructiveRed),
+                          "Echec de chargement",
+                        ),
                       _ => null,
                     },
                   );
@@ -590,6 +678,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           onTap: () {
             _myLocationController.value = false;
             _placeController.value = SuccessState(item);
+            _goToPosition(_placeToLatLng(item)!);
             Navigator.pop(context);
           },
           subtitle: item.subtitle,
@@ -632,16 +721,28 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ProfileLocationMap(
                 onMapIdle: _onMapIdle,
                 onMapMoved: _onMapMoved,
-                onCameraIdle: _onCameraIdle,
                 onMapCreated: _onMapCreated,
                 onStyleLoadedCallback: _onStyleLoadedCallback,
                 onUserLocationUpdated: _onUserLocationUpdated,
               ),
-              Positioned.fill(
-                bottom: 100.0,
-                child: ProfileLocationPin(
-                  controller: _pinAnimationController,
-                ),
+              ValueListenableBuilder<double?>(
+                valueListenable: _pinVisibilityController,
+                builder: (context, padding, child) {
+                  return Visibility(
+                    key: ValueKey(padding),
+                    visible: padding != null,
+                    child: Builder(
+                      builder: (context) {
+                        return Positioned.fill(
+                          bottom: padding,
+                          child: ProfileLocationPin(
+                            controller: _pinAnimationController,
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ],
           ),

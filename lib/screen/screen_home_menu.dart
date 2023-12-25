@@ -46,7 +46,7 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
         return const HomeMenuNotifisModal();
       },
     );
-    if (data == null) {
+    if (data != null) {
       openAppSettings();
     }
   }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter/material.dart';
@@ -185,7 +186,10 @@ class _ProfileLocationMapState extends State<ProfileLocationMap> {
             onMapCreated: widget.onMapCreated,
             onMapLongClick: widget.onMapLongClick,
             myLocationEnabled: widget.myLocationEnabled,
-            myLocationRenderMode: MyLocationRenderMode.COMPASS,
+            myLocationRenderMode: switch (defaultTargetPlatform) {
+              TargetPlatform.iOS => MyLocationRenderMode.COMPASS,
+              _ => MyLocationRenderMode.GPS,
+            },
             onUserLocationUpdated: widget.onUserLocationUpdated,
             onStyleLoadedCallback: widget.onStyleLoadedCallback ?? () {},
             initialCameraPosition: switch (widget.center) {
@@ -205,7 +209,7 @@ class HomeLocationWidget extends StatelessWidget {
     this.title,
     required this.suggestionsBuilder,
   });
-  final String? title;
+  final Widget? title;
   final SuggestionsBuilder suggestionsBuilder;
   @override
   Widget build(BuildContext context) {
@@ -242,8 +246,9 @@ class HomeLocationWidget extends StatelessWidget {
               child: Builder(
                 builder: (context) {
                   return DefaultTextStyle.merge(
+                    maxLines: 2,
                     style: TextStyle(color: theme.colorScheme.primary),
-                    child: Text(title!, maxLines: 2),
+                    child: title!,
                   );
                 },
               ),

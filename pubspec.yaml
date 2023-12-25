@@ -29,6 +29,7 @@ dependencies:
   # Services
   firebase_messaging:
   permission_handler:
+  google_mobile_ads:
   firebase_core:
   path_provider:
   service_tools:
