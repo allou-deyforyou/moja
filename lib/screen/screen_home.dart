@@ -46,16 +46,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   void _loadInterstitialAd() {
-    InterstitialAd.load(
-      request: const AdRequest(),
-      adUnitId: AdMobConfig.homeInterstitialAd,
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdFailedToLoad: (err) {},
-        onAdLoaded: (ad) {
-          _interstitialAd = ad;
-        },
-      ),
-    );
+    _interstitialAdTimer = Timer(_interstitialAdTimeout, () async {
+      if (_interstitialAd == null) {
+        InterstitialAd.load(
+          request: const AdRequest(),
+          adUnitId: AdMobConfig.homeInterstitialAd,
+          adLoadCallback: InterstitialAdLoadCallback(
+            onAdFailedToLoad: (err) {},
+            onAdLoaded: (ad) {
+              _interstitialAd = ad;
+            },
+          ),
+        );
+
+        if (_interstitialAdTimeout <= const Duration(minutes: 5)) {
+          _interstitialAdTimeout += const Duration(minutes: 1);
+        }
+      }
+
+      _loadInterstitialAd();
+    });
   }
 
   void _loadBannerAd() {
@@ -367,6 +377,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
 
     _interstitialAdTimeout = Duration.zero;
+    _loadInterstitialAd();
 
     _bannerAdLoaded = ValueNotifier(false);
     _loadBannerAd();
@@ -489,14 +500,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   void _openAccountListView() async {
-    _interstitialAdTimer = Timer(_interstitialAdTimeout, () async {
-      _loadInterstitialAd();
-
-      if (_interstitialAdTimeout <= const Duration(minutes: 5)) {
-        _interstitialAdTimeout += const Duration(minutes: 1);
-      }
-    });
-
     final mediaQuery = context.mediaQuery;
     _mapPadding = mediaQuery.size.height * 0.5;
 
