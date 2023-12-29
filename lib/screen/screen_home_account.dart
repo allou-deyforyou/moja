@@ -49,8 +49,8 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
         context: context,
         text: 'Vous pouvez retirer ici',
       );
-    } else if (state case FailureState<SelectRelayEvent>(:final code)) {
-      switch (code) {
+    } else if (state case FailureState<String>(:final data)) {
+      switch (data) {
         case 'no-record':
           showSnackBar(
             context: context,
@@ -108,7 +108,7 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
           ),
           SliverFillRemaining(
             hasScrollBody: false,
-            child: ControllerConsumer(
+            child: ControllerBuilder(
               listener: _listenRelayState,
               controller: _relayController,
               builder: (context, state, child) {

@@ -73,8 +73,8 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
       _relayAccounts = List.from(data);
       _bannerAdIndex = Random().nextInt(_relayAccounts.length);
       _relayAccounts.insert(_bannerAdIndex, _relayAccounts[_bannerAdIndex]);
-    } else if (state case FailureState<SelectAccountEvent>(:final code)) {
-      switch (code) {}
+    } else if (state case FailureState<String>(:final data)) {
+      switch (data) {}
     }
   }
 
@@ -131,7 +131,7 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
             relay: _currentRelay?.name,
           ),
           SliverPadding(padding: kMaterialListPadding / 3),
-          ControllerConsumer(
+          ControllerBuilder(
             autoListen: true,
             listener: _listenAccountState,
             controller: _accountController,
@@ -171,11 +171,11 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
                       ),
                     ],
                   ),
-                FailureState<SelectAccountEvent>(:final code, :final event) => switch (code) {
+                FailureState<String>(:final data, :final AsyncEvent<AsyncState> event) => switch (data) {
                     _ => SliverFillRemaining(
                         hasScrollBody: false,
                         child: HomeChoiceError(
-                          onTry: () => _accountController.run(event!),
+                          onTry: () => _accountController.run(event),
                         ),
                       ),
                   },

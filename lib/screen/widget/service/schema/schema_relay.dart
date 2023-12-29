@@ -28,7 +28,7 @@ class Relay extends Equatable {
     required this.contacts,
   });
 
-  static const String schema = 'relay';
+  static const String schema = 'online_relay';
 
   static const String idKey = 'id';
   static const String nameKey = 'name';

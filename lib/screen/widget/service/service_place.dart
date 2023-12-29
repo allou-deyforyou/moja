@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:listenable_tools/async.dart';
+import 'package:listenable_tools/listenable_tools.dart';
 
 import '_service.dart';
 
@@ -48,13 +48,13 @@ class SearchPlaceEvent extends AsyncEvent<AsyncState> {
         }
       } else {
         emit(FailureState(
-          code: 'no-record',
+          'no-record',
           event: this,
         ));
       }
     } catch (error) {
       emit(FailureState(
-        code: error.toString(),
+        'internal-error',
         event: this,
       ));
     }

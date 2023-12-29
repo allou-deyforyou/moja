@@ -340,8 +340,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     if (state case SuccessState<List<PolyLine>>(:final data)) {
       _drawLines(data);
       _routes = data;
-    } else if (state case FailureState<GetRouteEvent>(:final code)) {
-      switch (code) {
+    } else if (state case FailureState<String>(:final data)) {
+      switch (data) {
         default:
           showSnackBar(
             context: context,
@@ -534,7 +534,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 cashin: cashin,
               ),
             ),
-            ControllerConsumer(
+            ControllerBuilder(
               autoListen: true,
               listener: _listenRelayState,
               controller: _relayController,
@@ -569,7 +569,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         );
                       },
                     ),
-                  FailureState<SelectRelayEvent>(:final code, :final event) => switch (code) {
+                  FailureState<String>(:final data, :final AsyncEvent<AsyncState> event) => switch (data) {
                       'no-record' => SliverFillRemaining(
                           hasScrollBody: false,
                           child: HomeRelayNoFound(
@@ -580,7 +580,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       _ => SliverFillRemaining(
                           hasScrollBody: false,
                           child: HomeRelayError(
-                            onTry: () => _relayController.run(event!),
+                            onTry: () => _relayController.run(event),
                           ),
                         ),
                     },
@@ -621,7 +621,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ControllerConsumer(
+              ControllerBuilder(
                 listener: _listenPlaceState,
                 controller: _placeController,
                 builder: (context, state, child) {
