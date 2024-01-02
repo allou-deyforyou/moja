@@ -56,7 +56,9 @@
     "helporsuggestions": "help or suggestions",
     "email": "email",
     "whatsapp": "whatsapp",
+    "police": "police",
     "shareapp": "share the app",
+    "rateapp": "rate the app",
     "light": "light",
     "dark": "dark",
     "system": "system",
@@ -66,6 +68,7 @@
     "loading": "loading",
     "call": "call",
     "loadingfailed": "loading failed",
+    "noservice": "no service available at this location",
     "clicktryagain": "click to try again",
     "tryagain": "try again"
 }

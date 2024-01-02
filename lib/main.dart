@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:service_tools/service_tools.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'screen/_screen.dart';
@@ -39,11 +40,16 @@ class _MyAppState extends State<MyApp> {
     _themeModeStream = HiveLocalDB.themeModeStream;
 
     _router = GoRouter(
-      initialLocation: OnBoardingScreen.path,
+      observers: [
+        FirebaseAnalyticsObserver(
+          analytics: FirebaseConfig.firebaseAnalytics,
+        ),
+      ],
       routes: [
         GoRoute(
           name: HomeScreen.name,
           path: HomeScreen.path,
+          redirect: HomeScreen.redirect,
           pageBuilder: (context, state) {
             return const NoTransitionPage<void>(
               child: HomeScreen(),
@@ -115,10 +121,10 @@ class _MyAppState extends State<MyApp> {
             return MaterialApp.router(
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
+              locale: localeSnapshot.data?.normalize(),
               themeMode: themeModeSnapshot.data,
               color: AppThemes.primaryColor,
               darkTheme: AppThemes.darkTheme,
-              locale: localeSnapshot.data,
               theme: AppThemes.theme,
               routerConfig: _router,
             );

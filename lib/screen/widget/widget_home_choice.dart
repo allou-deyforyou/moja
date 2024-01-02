@@ -89,29 +89,58 @@ class HomeChoiceError extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.theme;
     final localizations = context.localizations;
-    return Container(
-      alignment: Alignment.center,
-      padding: const EdgeInsets.all(26.0),
-      child: DefaultTextStyle.merge(
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
-          letterSpacing: -0.5,
-          fontSize: 24.0,
-          height: 1.2,
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        DefaultTextStyle.merge(
+          style: TextStyle(
+            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+            letterSpacing: -0.5,
+            fontSize: 24.0,
+            height: 1.2,
+          ),
+          child: Text(
+            localizations.loadingfailed.capitalize(),
+          ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(localizations.loadingfailed.capitalize()),
-            TextButton(
-              onPressed: onTry,
-              style: TextButton.styleFrom(textStyle: theme.textTheme.titleMedium),
-              child: Text(localizations.clicktryagain.capitalize()),
-            ),
-          ],
+        const SizedBox(height: 6.0),
+        TextButton(
+          onPressed: onTry,
+          style: TextButton.styleFrom(
+            textStyle: theme.textTheme.titleMedium,
+          ),
+          child: Text(
+            localizations.clicktryagain.capitalize(),
+          ),
         ),
-      ),
+      ],
+    );
+  }
+}
+
+class HomeChoiceNoSupport extends StatelessWidget {
+  const HomeChoiceNoSupport({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final localizations = context.localizations;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        DefaultTextStyle.merge(
+          style: TextStyle(
+            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+            letterSpacing: -0.5,
+            fontSize: 24.0,
+            height: 1.2,
+          ),
+          child: Text(
+            localizations.noservice.capitalize(),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ],
     );
   }
 }

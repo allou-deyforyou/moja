@@ -114,6 +114,7 @@ class HomeAccountSubmittedButton extends StatelessWidget {
   final VoidCallback? onPressed;
   @override
   Widget build(BuildContext context) {
+    final localizations = MaterialLocalizations.of(context);
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -122,7 +123,7 @@ class HomeAccountSubmittedButton extends StatelessWidget {
           padding: kTabLabelPadding.copyWith(top: 26.0, bottom: 26.0),
           child: CustomSubmittedButton(
             onPressed: onPressed,
-            child: Text(MaterialLocalizations.of(context).searchFieldLabel.toUpperCase()),
+            child: Text(localizations.searchFieldLabel.toUpperCase()),
           ),
         ),
       ],

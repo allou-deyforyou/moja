@@ -67,14 +67,10 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
   late final AsyncController<AsyncState> _accountController;
 
   void _listenAccountState(BuildContext context, AsyncState state) {
-    if (state is InitState) {
-      _selectAccount();
-    } else if (state case SuccessState<List<Account>>(:final data)) {
+    if (state case SuccessState<List<Account>>(:final data)) {
       _relayAccounts = List.from(data);
       _bannerAdIndex = Random().nextInt(_relayAccounts.length);
       _relayAccounts.insert(_bannerAdIndex, _relayAccounts[_bannerAdIndex]);
-    } else if (state case FailureState<String>(:final data)) {
-      switch (data) {}
     }
   }
 
@@ -105,10 +101,15 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
     _loadAd();
 
     /// AccountService
-    _accountController = switch (_currentRelay) {
-      Relay() => AsyncController<AsyncState>(const InitState()),
-      _ => currentAccounts,
-    };
+    if (_currentRelay != null) {
+      _accountController = AsyncController<AsyncState>(const InitState());
+    } else {
+      _accountController = currentAccounts;
+    }
+
+    if (_accountController.value is! SuccessState<List<Account>>) {
+      _selectAccount();
+    }
   }
 
   @override
@@ -171,11 +172,15 @@ class _HomeChoiceScreenState extends State<HomeChoiceScreen> {
                       ),
                     ],
                   ),
-                FailureState<String>(:final data, :final AsyncEvent<AsyncState> event) => switch (data) {
+                FailureState<String>(:final data) => switch (data) {
+                    'no-record' => const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: HomeChoiceNoSupport(),
+                      ),
                     _ => SliverFillRemaining(
                         hasScrollBody: false,
                         child: HomeChoiceError(
-                          onTry: () => _accountController.run(event),
+                          onTry: _selectAccount,
                         ),
                       ),
                   },

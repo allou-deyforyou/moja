@@ -22,7 +22,28 @@
         "appinvite_service": {
           "other_platform_oauth_client": []
         }
-      }
+      },
+      "admob_app_id": "ca-app-pub-4374451154944181~7140007851"
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:73497335498:android:25fb78348a3302637a4633",
+        "android_client_info": {
+          "package_name": "com.moja.moja_pro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrVgU4jsdjly2_vN17-MLgZS3FpRq1Oao"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      },
+      "admob_app_id": "ca-app-pub-4374451154944181~9591523752"
     }
   ],
   "configuration_version": "1"

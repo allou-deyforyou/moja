@@ -126,6 +126,22 @@ class HomeMenuShare extends StatelessWidget {
   }
 }
 
+class HomeMenuRate extends StatelessWidget {
+  const HomeMenuRate({
+    super.key,
+    this.onTap,
+  });
+  final VoidCallback? onTap;
+  @override
+  Widget build(BuildContext context) {
+    final localizations = context.localizations;
+    return CustomListTile(
+      onTap: onTap,
+      title: Text(localizations.rateapp.capitalize()),
+    );
+  }
+}
+
 class HomeMenuNotifisModal extends StatelessWidget {
   const HomeMenuNotifisModal({super.key});
 
@@ -409,6 +425,26 @@ class HomeMenuSupportWhatsappWidget extends StatelessWidget {
         width: 26.0,
       ),
       title: Text(localizations.whatsapp.capitalize()),
+      trailing: Text(phone),
+    );
+  }
+}
+
+class HomeMenuSupportPoliceWidget extends StatelessWidget {
+  const HomeMenuSupportPoliceWidget({
+    super.key,
+    required this.onTap,
+    required this.phone,
+  });
+  final VoidCallback? onTap;
+  final String phone;
+  @override
+  Widget build(BuildContext context) {
+    final localizations = context.localizations;
+    return CustomListTile(
+      onTap: onTap,
+      leading: const Icon(Icons.policy_rounded),
+      title: Text(localizations.police.capitalize()),
       trailing: Text(phone),
     );
   }

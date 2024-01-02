@@ -98,7 +98,7 @@ class ProfileLocationPin extends StatelessWidget {
         child: Transform.scale(
           scale: 4.0,
           child: LottieBuilder.asset(
-            Assets.images.mylocation2,
+            Assets.images.mylocation,
             controller: controller,
             fit: BoxFit.contain,
             animate: false,

@@ -16,13 +16,21 @@ class SelectRelayEvent extends AsyncEvent<AsyncState> {
     try {
       emit(const PendingState());
 
-      final relayFilter = relay != null ? 'AND ${Relay.idKey} = ${relay!.id}' : '';
-      final relayAccountFilters = 'WHERE ->(created WHERE out = ${account.id} AND ${Account.amountKey} >= ${account.amount})';
-      final relayCashFilters = 'AND ->(created WHERE out = ${Account.schema}:cash AND ${Account.amountKey} >= ${account.amount})';
+      final relayFilter = 'AND ${Relay.idKey} = ${relay?.id}';
+
+      final relayAccountFilters = 'WHERE ->(created WHERE out = ${account.id})';
+
+      final relayCashInFilters = 'AND ->(created ${Account.amountKey} >= ${account.amount})';
+
+      final relayCashOutFilters = 'AND ->(created WHERE out = ${Account.schema}:cash AND ${Account.amountKey} >= ${account.amount})';
+
       final selectRelay = 'SELECT * FROM ${Relay.schema} $relayAccountFilters';
+
       final responses = await sql(switch (account.transaction!) {
-        Transaction.cashout => '$selectRelay $relayCashFilters $relayFilter',
-        Transaction.cashin => '$selectRelay $relayFilter',
+        Transaction.cashout when relay != null => '$selectRelay $relayCashOutFilters $relayFilter PARALLEL',
+        Transaction.cashin when relay != null => '$selectRelay $relayCashInFilters $relayFilter PARALLEL',
+        Transaction.cashout => '$selectRelay $relayCashOutFilters PARALLEL',
+        Transaction.cashin => '$selectRelay $relayCashInFilters PARALLEL',
       });
 
       final List response = responses.first;
@@ -32,7 +40,7 @@ class SelectRelayEvent extends AsyncEvent<AsyncState> {
         emit(SuccessState(data));
       } else {
         emit(FailureState(
-         'no-record',
+          'no-record',
           event: this,
         ));
       }

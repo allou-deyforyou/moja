@@ -56,7 +56,9 @@
     "helporsuggestions": "aide ou suggestions",
     "email": "e-mail",
     "whatsapp": "whatsapp",
+    "police": "police",
     "shareapp": "partager l'app",
+    "rateapp": "évaluer l'app",
     "light": "clair",
     "dark": "sombre",
     "system": "système",
@@ -66,6 +68,7 @@
     "loading": "chargement",
     "call": "appeler",
     "loadingfailed": "échec du chargement",
+    "noservice": "aucun service disponible à cet endroit",
     "clicktryagain": "cliquez pour réessayer",
     "tryagain": "réessayer"
 }

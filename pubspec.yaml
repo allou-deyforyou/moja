@@ -11,32 +11,47 @@ dependencies:
   # Assets
   flutter_localizations:
     sdk: flutter
-  pattern_formatter:
-  cupertino_icons:
-  equatable:
-  go_router:
   intl:
+
+  pattern_formatter:
+  
+  flutter_timezone:
+  timezone:
+
+  equatable:
+  
+  go_router:
   # Widgets
   cached_network_image:
   listenable_tools:
+  cupertino_icons:
   widget_tools:
   maplibre_gl:
-    git:
-      url: https://github.com/maplibre/flutter-maplibre-gl.git
-      ref: 0.16.0
   shimmer:
   lottie:
   # Services
-  firebase_messaging:
+  flutter_local_notifications:
+
   permission_handler:
-  google_mobile_ads:
+
+  firebase_remote_config:
+  firebase_crashlytics:
+  firebase_analytics:
+  firebase_messaging:
   firebase_core:
-  path_provider:
-  service_tools:
+
+  google_mobile_ads:
+
   hive_flutter:
+  hive:
+
+  in_app_review:
+  path_provider:
   url_launcher:
   share_plus:
-  hive:
+
+  service_tools:
+
   dio:
 
 dev_dependencies:

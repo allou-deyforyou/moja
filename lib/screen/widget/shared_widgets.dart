@@ -324,6 +324,7 @@ class CustomAvatarWidget extends StatelessWidget {
 }
 
 const customBannerAd = AdSize(width: 640, height: 60);
+
 class CustomBannerAdWidget extends StatelessWidget {
   const CustomBannerAdWidget({
     super.key,
@@ -338,21 +339,25 @@ class CustomBannerAdWidget extends StatelessWidget {
   final AdWithView ad;
   @override
   Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 200),
-      transitionBuilder: (child, animation) {
-        return SizeTransition(
-          sizeFactor: animation,
-          child: child,
-        );
-      },
-      child: Visibility(
-        key: ValueKey(loaded),
-        visible: loaded,
-        child: SizedBox(
-          width: width ?? double.maxFinite,
-          height: height ?? customBannerAd.height.toDouble(),
-          child: AdWidget(ad: ad),
+    return CustomKeepAlive(
+      child: ClipPath(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, animation) {
+            return SizeTransition(
+              sizeFactor: animation,
+              child: child,
+            );
+          },
+          child: Visibility(
+            key: ValueKey(loaded),
+            visible: loaded,
+            child: SizedBox(
+              width: width ?? double.maxFinite,
+              height: height ?? customBannerAd.height.toDouble(),
+              child: AdWidget(ad: ad),
+            ),
+          ),
         ),
       ),
     );

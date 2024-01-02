@@ -1,8 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:listenable_tools/listenable_tools.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '_screen.dart';
 
@@ -27,21 +27,17 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
 
   void _onNotifsTaped(bool active) async {
     if (active) {
-      final service = AsyncController<AsyncState>(const InitState());
-      await service.run(const GetPermissionEvent(permission: Permission.notification));
-      if (service.value is SuccessState<Permission>) {
-        HiveLocalDB.notifications = active;
-      } else {
-        _openNotifsModal();
-      }
+      final enabled = await NotificationConfig.enableNotifications();
+      if (!enabled) _openNotifsModal();
     } else {
-      HiveLocalDB.notifications = active;
+      NotificationConfig.disableNotifications();
     }
   }
 
   void _openNotifsModal() async {
-    final data = await showDialog(
+    final data = await showCupertinoModalPopup<bool>(
       context: context,
+      barrierColor: Colors.black54,
       builder: (context) {
         return const HomeMenuNotifisModal();
       },
@@ -53,8 +49,9 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
 
   VoidCallback _openThemeModal(ThemeMode themeMode) {
     return () async {
-      final data = await showDialog<ThemeMode>(
+      final data = await showCupertinoModalPopup<ThemeMode>(
         context: context,
+        barrierColor: Colors.black54,
         builder: (context) {
           return HomeMenuThemeModal<ThemeMode>(
             onSelected: (value) => HiveLocalDB.themeMode = value,
@@ -70,17 +67,12 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
 
   VoidCallback _openLanguageModal(Locale? locale) {
     return () async {
-      final data = await showDialog<Locale>(
+      final data = await showCupertinoModalPopup<Locale>(
         context: context,
+        barrierColor: Colors.black54,
         builder: (context) {
           return HomeMenuLanguageModal<Locale>(
-            onSelected: (value) {
-              if (value.languageCode == 'system') {
-                HiveLocalDB.locale = null;
-              } else {
-                HiveLocalDB.locale = value;
-              }
-            },
+            onSelected: (value) => HiveLocalDB.locale = value,
             selected: locale,
           );
         },
@@ -91,22 +83,48 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
     };
   }
 
+  VoidCallback _launnchApp(Uri url) {
+    return () async {
+      if (await canLaunchUrl(url)) {
+        launchUrl(url);
+      } else {}
+    };
+  }
+
   void _openSupportScreen() {
     showModalBottomSheet(
       context: context,
       builder: (context) {
         return HomeMenuSupportModal(
           children: [
-            HomeMenuSupportEmailWidget(
-              email: "support@moja.com",
-              onTap: () {
-                launchUrl(Uri.parse('uri'));
+            Builder(
+              builder: (context) {
+                final url = RemoteConfig.emailSupport;
+                final value = Uri.decodeFull(url.path);
+                return HomeMenuSupportEmailWidget(
+                  onTap: _launnchApp(url),
+                  email: value,
+                );
               },
             ),
-            HomeMenuSupportWhatsappWidget(
-              phone: "+225 0749414602",
-              onTap: () {
-                launchUrl(Uri.parse('uri'));
+            Builder(
+              builder: (context) {
+                final url = RemoteConfig.whatsappSupport;
+                final value = Uri.decodeFull(url.path);
+                return HomeMenuSupportWhatsappWidget(
+                  onTap: _launnchApp(url),
+                  phone: value,
+                );
+              },
+            ),
+            Builder(
+              builder: (context) {
+                final url = RemoteConfig.policeSupport;
+                final value = Uri.decodeFull(url.path);
+                return HomeMenuSupportPoliceWidget(
+                  onTap: _launnchApp(url),
+                  phone: value,
+                );
               },
             ),
           ],
@@ -118,9 +136,13 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
   void _openShareScreen() {
     final box = context.findRenderObject() as RenderBox?;
     Share.share(
-      'hello',
+      RemoteConfig.appLink,
       sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
     );
+  }
+
+  void _openRateScreen() {
+    HiveLocalDB.showInAppReview();
   }
 
   @override
@@ -193,6 +215,11 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
           SliverToBoxAdapter(
             child: HomeMenuShare(
               onTap: _openShareScreen,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: HomeMenuRate(
+              onTap: _openRateScreen,
             ),
           ),
         ],

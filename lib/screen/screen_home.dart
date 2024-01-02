@@ -1,15 +1,17 @@
-import 'dart:async';
-import 'dart:math';
+import 'dart:math' show Random;
+import 'dart:async' show StreamController, Timer;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:maplibre_gl/mapbox_gl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:widget_tools/widget_tools.dart';
 import 'package:listenable_tools/listenable_tools.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '_screen.dart';
 
@@ -17,6 +19,14 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   static const name = 'home';
   static const path = '/';
+
+  static Future<String?> redirect(BuildContext context, GoRouterState state) async {
+    if (await Permission.locationWhenInUse.isGranted) {
+      return null;
+    }
+    return OnBoardingScreen.path;
+  }
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -151,11 +161,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   late double _mapPadding;
   late double _zoom;
   late double _tilt;
+  double? _bearing;
 
   void _onMapCreated(MaplibreMapController controller) async {
     _mapController = controller;
-
-    _goToMyPosition();
   }
 
   Future<void> _onStyleLoadedCallback() async {
@@ -165,12 +174,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     ]);
     if (_relays != null) {
       _addRelayMaplibre(_relays!);
-    } else if (_currentRelay != null && _routes != null) {
+    } else if (_currentRelay != null && _route != null) {
       _addRelayMaplibre([_currentRelay!]);
-      _drawLines(_routes!);
+      _drawLines(_route!);
     }
-
-    _goToMyPosition();
   }
 
   Future<void> _updateContentInsets() {
@@ -189,9 +196,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Future<void> _loadImages() async {
-    final pintData = await rootBundle.load(Assets.images.pin2.path);
+    final pintData = await rootBundle.load(Assets.images.store.path);
     await _mapController!.addImage(
-      Assets.images.pin2.keyName,
+      Assets.images.store.keyName,
       pintData.buffer.asUint8List(),
     );
   }
@@ -214,16 +221,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   void _onUserLocationUpdated(UserLocation location) {
-    if (_myLocationController.value) {
-      _goToPosition(
-        location.position,
-        bearing: switch (_currentRelay) {
-          Relay() => _userLocation?.bearing ?? 0.0,
-          _ => 0.0,
-        },
-      );
+    if (_userLocation == null) {
+      _goToMyPosition(location);
+    } else if (_myLocationController.value) {
+      _goToPosition(location.position);
     }
+
     _userLocation = location;
+    _routeTruncateController?.add(_userLocation!.position);
   }
 
   Future<void> _setZoom(double zoom) async {
@@ -242,12 +247,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  void _goToPosition(LatLng position, {double bearing = 0.0}) {
+  void _goToPosition(LatLng position) {
     if (_mapController == null) return;
 
     _mapController!.animateCamera(
       CameraUpdate.newCameraPosition(CameraPosition(
-        bearing: bearing,
+        bearing: _bearing ?? 0.0,
         target: position,
         tilt: _tilt,
         zoom: _zoom,
@@ -255,14 +260,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  void _goToMyPosition() async {
-    if (_userLocation == null) return;
+  void _goToMyPosition([UserLocation? location]) async {
+    location ??= _userLocation;
+    if (location == null) return;
 
     _myLocationController.value = true;
 
-    _centerPosition = _userLocation!.position;
-    final bearing = _userLocation!.bearing ?? 0.0;
-    _goToPosition(_centerPosition!, bearing: bearing);
+    _bearing = location.bearing ?? 0.0;
+    _centerPosition = location.position;
+
+    _goToPosition(_centerPosition!);
 
     _searchPlace(_centerPosition!);
   }
@@ -275,22 +282,39 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       return SymbolOptions(
         textHaloColor: theme.colorScheme.surface.toHexStringRGB(),
         textColor: theme.colorScheme.onSurface.toHexStringRGB(),
+        iconColor: theme.colorScheme.surface.toHexStringRGB(),
         geometry: _placeToLatLng(item.location),
-        iconImage: Assets.images.pin2.keyName,
+        iconImage: Assets.images.store.keyName,
         iconOffset: const Offset(0.0, -20.0),
-        textOffset: const Offset(0.0, -3.0),
+        textOffset: switch (defaultTargetPlatform) {
+          TargetPlatform.android => const Offset(0.0, -2.8),
+          TargetPlatform.iOS => const Offset(0.0, -2.0),
+          _ => throw 'Unsupported Platform',
+        },
         textField: item.name,
+        textHaloBlur: 2.0,
+        iconSize: switch (defaultTargetPlatform) {
+          TargetPlatform.android => 0.5,
+          TargetPlatform.iOS => 0.25,
+          _ => throw 'Unsupported Platform',
+        },
       );
     })));
   }
 
-  Future<void> _drawLines(List<PolyLine> routes) async {
-    const options = LineOptions(lineColor: "#ff0000", lineJoin: 'round', lineWidth: 4.0);
-    for (final route in routes) {
-      await _mapController!.addLine(options.copyWith(LineOptions(
-          geometry: route.coordinates!.expand((coordinate) {
-        return [LatLng(coordinate[1], coordinate[0])];
-      }).toList())));
+  Future<void> _drawLines(List<LatLng> route) async {
+    final options = LineOptions(
+      lineColor: "#ff0000",
+      lineJoin: 'round',
+      lineWidth: 4.0,
+      geometry: route,
+    );
+
+    final line = _mapController!.lines.firstOrNull;
+    if (line != null) {
+      await _mapController!.updateLine(line, options);
+    } else {
+      await _mapController!.addLine(options);
     }
   }
 
@@ -334,12 +358,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   /// RouteService
   late AsyncController<AsyncState> _routeController;
-  List<PolyLine>? _routes;
+  StreamController<LatLng>? _routeTruncateController;
+  List<LatLng>? _route;
 
-  void _listenRouteState(BuildContext context, AsyncState state) {
-    if (state case SuccessState<List<PolyLine>>(:final data)) {
+  void _listenRouteState(BuildContext context, AsyncState state) async {
+    if (state case SuccessState<List<LatLng>>(:final data)) {
+      _route = data;
       _drawLines(data);
-      _routes = data;
+
+      _truncateRoute(data);
+    } else if (state case SuccessState<StreamController<LatLng>>(:final data)) {
+      _routeTruncateController = data;
+    } else if (state case SuccessState<List<LatLng>?>(:final data)) {
+      if (data != null) {
+        _drawLines(data);
+      } else {
+        if (_routeController.value is! PendingState) {
+          _getRoute(_currentRelay!);
+        }
+      }
     } else if (state case FailureState<String>(:final data)) {
       switch (data) {
         default:
@@ -353,13 +390,19 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Future<void> _getRoute(Relay item) {
     final position = _placeToLatLng(item.location)!;
-    return _routeController.run(GetRouteEvent(source: (
-      longitude: _userLocation!.position.longitude,
-      latitude: _userLocation!.position.latitude,
-    ), destination: (
-      longitude: position.longitude,
-      latitude: position.latitude,
-    )));
+    return _routeController.run(GetRouteEvent(
+      source: _userLocation!.position,
+      destination: position,
+    ));
+  }
+
+  Future<void> _truncateRoute(List<LatLng> route) {
+    _routeTruncateController?.close();
+    _routeTruncateController = null;
+
+    return _routeController.run(TruncateRouteEvent(
+      route: route,
+    ));
   }
 
   @override
@@ -399,25 +442,30 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     /// Assets
     _interstitialAdTimer?.cancel();
 
+    /// RouteService
+    _routeTruncateController?.close();
+    _routeTruncateController = null;
+
     super.dispose();
   }
 
   VoidCallback _callRelayModal(Relay item) {
     return () {
-      showCupertinoModalPopup(
-        context: context,
-        builder: (context) {
-          return HomeRelayCallModal(
-            relay: item.name,
-            onCall: () {
-              launchUrl(Uri(
-                path: item.contacts!.first,
-                scheme: 'tel',
-              ));
-            },
-          );
-        },
-      );
+      final phone = item.contacts!.first;
+      void onCall() => launchUrl(Uri(scheme: 'tel', path: phone));
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        onCall();
+      } else {
+        showCupertinoModalPopup(
+          context: context,
+          builder: (context) {
+            return HomeRelayCallModal(
+              relay: item.name,
+              onCall: onCall,
+            );
+          },
+        );
+      }
     };
   }
 
@@ -450,7 +498,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       if (!mounted) return;
 
       _routeController = AsyncController(const InitState());
-      _getRoute(item);
+      _getRoute(_currentRelay!);
 
       await showCustomBottomSheet(
         context: _scaffoldContext,
@@ -503,8 +551,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final mediaQuery = context.mediaQuery;
     _mapPadding = mediaQuery.size.height * 0.5;
 
-    _routes = null;
+    _route = null;
     _currentRelay = null;
+
+    _routeTruncateController?.close();
+    _routeTruncateController = null;
+
     _pinVisibilityController.value = null;
 
     if (_mapController != null) {

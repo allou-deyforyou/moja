@@ -7,6 +7,10 @@ import '_schema.dart';
 enum Transaction {
   cashin,
   cashout;
+
+  String toJson() {
+    return name;
+  }
 }
 
 class Account extends Equatable {

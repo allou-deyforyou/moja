@@ -225,6 +225,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.4"
+  dbus:
+    dependency: transitive
+    description:
+      name: dbus
+      sha256: "365c771ac3b0e58845f39ec6deebc76e3276aa9922b0cc60840712094d9047ac"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.10"
   dio:
     dependency: "direct main"
     description:
@@ -265,6 +273,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.0"
+  firebase_analytics:
+    dependency: "direct main"
+    description:
+      name: firebase_analytics
+      sha256: "5e92d510eacd66c354718fd9cc8f66ffdfa025640b645c4742297fb973770508"
+      url: "https://pub.dev"
+    source: hosted
+    version: "10.7.4"
+  firebase_analytics_platform_interface:
+    dependency: transitive
+    description:
+      name: firebase_analytics_platform_interface
+      sha256: "72977325a72af5ebb8e53b5c5533cb2e33eec481cd46210cfe5427f5efba55d8"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.8.4"
+  firebase_analytics_web:
+    dependency: transitive
+    description:
+      name: firebase_analytics_web
+      sha256: "8b9710be7e292e2a5ad34fff449d4b668c5808fb339649e69181727a4534f579"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.5+11"
   firebase_core:
     dependency: "direct main"
     description:
@@ -289,6 +321,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.10.0"
+  firebase_crashlytics:
+    dependency: "direct main"
+    description:
+      name: firebase_crashlytics
+      sha256: "5ccdf05de039f9544d0ba41c5ae2052ca2425985d32229911b09f69981164518"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.4.8"
+  firebase_crashlytics_platform_interface:
+    dependency: transitive
+    description:
+      name: firebase_crashlytics_platform_interface
+      sha256: "359197344def001589c84f8d1d57c05f6e2e773f559205610ce58c25e2045a57"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.6.16"
   firebase_messaging:
     dependency: "direct main"
     description:
@@ -313,6 +361,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.5.18"
+  firebase_remote_config:
+    dependency: "direct main"
+    description:
+      name: firebase_remote_config
+      sha256: "60fc92273d1db338a6fad1839c42dedc4ad64f812043acad0cbb200702f5c9ce"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.3.8"
+  firebase_remote_config_platform_interface:
+    dependency: transitive
+    description:
+      name: firebase_remote_config_platform_interface
+      sha256: "41813ef8dfbc40ef7a59a73f9e5acef2608dbcb2933241b6c03d52e90677040f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.16"
+  firebase_remote_config_web:
+    dependency: transitive
+    description:
+      name: firebase_remote_config_web
+      sha256: "089e92f333c2fb2c05c640c80fecea9d1e06dada0ba85efe34a580987ef94a0a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.16"
   fixnum:
     dependency: transitive
     description:
@@ -342,6 +414,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.1"
+  flutter_local_notifications:
+    dependency: "direct main"
+    description:
+      name: flutter_local_notifications
+      sha256: "892ada16046d641263f30c72e7432397088810a84f34479f6677494802a2b535"
+      url: "https://pub.dev"
+    source: hosted
+    version: "16.3.0"
+  flutter_local_notifications_linux:
+    dependency: transitive
+    description:
+      name: flutter_local_notifications_linux
+      sha256: "33f741ef47b5f63cc7f78fe75eeeac7e19f171ff3c3df054d84c1e38bedb6a03"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.0+1"
+  flutter_local_notifications_platform_interface:
+    dependency: transitive
+    description:
+      name: flutter_local_notifications_platform_interface
+      sha256: "7cf643d6d5022f3baed0be777b0662cce5919c0a7b86e700299f22dc4ae660ef"
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.0.0+1"
   flutter_localizations:
     dependency: "direct main"
     description: flutter
@@ -352,6 +448,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_timezone:
+    dependency: "direct main"
+    description:
+      name: flutter_timezone
+      sha256: "06b35132c98fa188db3c4b654b7e1af7ccd01dfe12a004d58be423357605fb24"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.8"
   flutter_web_plugins:
     dependency: transitive
     description: flutter
@@ -437,14 +541,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.2"
-  image:
-    dependency: transitive
+  in_app_review:
+    dependency: "direct main"
     description:
-      name: image
-      sha256: "8e9d133755c3e84c73288363e6343157c383a0c6c56fc51afcc5d4d7180306d6"
+      name: in_app_review
+      sha256: "41ec6f30427ab09eb6ae1c85c4a2a624a145fc5d726f023de4d97170ec9e5466"
       url: "https://pub.dev"
     source: hosted
-    version: "3.3.0"
+    version: "2.0.8"
+  in_app_review_platform_interface:
+    dependency: transitive
+    description:
+      name: in_app_review_platform_interface
+      sha256: fed2c755f2125caa9ae10495a3c163aa7fab5af3585a9c62ef4a6920c5b45f10
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.5"
   intl:
     dependency: "direct main"
     description:
@@ -512,38 +624,18 @@ packages:
   maplibre_gl:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "0.16.0"
-      resolved-ref: a133625e088220d7e1f29f3f33f022b8bdad03f4
-      url: "https://github.com/maplibre/flutter-maplibre-gl.git"
-    source: git
+      name: maplibre_gl
+      sha256: "825154b717ea6fda2802e95e2fb39c16356d8802d98bfc090e732e6678e42b99"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.16.0"
-  maplibre_gl_dart:
-    dependency: transitive
-    description:
-      path: "."
-      ref: "0.2.2"
-      resolved-ref: "24a48ecec0d07e02a0c51ced68a05f543d871583"
-      url: "https://github.com/m0nac0/maplibre-gl-dart.git"
-    source: git
-    version: "0.2.2"
   maplibre_gl_platform_interface:
     dependency: transitive
     description:
-      path: maplibre_gl_platform_interface
-      ref: "release-0.16.0"
-      resolved-ref: a133625e088220d7e1f29f3f33f022b8bdad03f4
-      url: "https://github.com/m0nac0/flutter-maplibre-gl.git"
-    source: git
-    version: "0.16.0"
-  maplibre_gl_web:
-    dependency: transitive
-    description:
-      path: maplibre_gl_web
-      ref: "release-0.16.0"
-      resolved-ref: a133625e088220d7e1f29f3f33f022b8bdad03f4
-      url: "https://github.com/m0nac0/flutter-maplibre-gl.git"
-    source: git
+      name: maplibre_gl_platform_interface
+      sha256: fe80e69346275fc8e0b027d01b3b766781beb15eb2fff2c067fb453d94898b7e
+      url: "https://pub.dev"
+    source: hosted
     version: "0.16.0"
   matcher:
     dependency: transitive
@@ -910,6 +1002,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.1"
+  timezone:
+    dependency: "direct main"
+    description:
+      name: timezone
+      sha256: "1cfd8ddc2d1cfd836bc93e67b9be88c3adaeca6f40a00ca999104c30693cdca0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.2"
   timing:
     dependency: transitive
     description:
