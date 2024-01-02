@@ -4,6 +4,7 @@
     "ok": "ok",
     "confirm": "confirm",
     "completed": "completed",
+    "tracingfailed": "tracing failed",
     "searchdepositpoints": "search for deposit points",
     "searchwithdrawalpoints": "search for withdrawal points",
     "deposit": "{name} deposit",
@@ -44,6 +45,10 @@
             }
         }
     },
+    "check": "check",
+    "findrelaypoint": "find a relay point",
+    "youcannotcarryout": "you cannot carry out this operation in this relay point.",
+    "youcancarryout": "you can carry out this operation in this relay point.",
     "amount": "amount",
     "edit": "edit",
     "menu": "menu",
@@ -70,5 +75,7 @@
     "loadingfailed": "loading failed",
     "noservice": "no service available at this location",
     "clicktryagain": "click to try again",
-    "tryagain": "try again"
+    "tryagain": "try again",
+    "connectionproblem": "connection problem, try again",
+    "erroroccured": "an error has occurred"
 }

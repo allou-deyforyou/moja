@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:maplibre_gl/mapbox_gl.dart';
 import 'package:widget_tools/widget_tools.dart';
 
@@ -207,9 +207,11 @@ class HomeLocationWidget extends StatelessWidget {
   const HomeLocationWidget({
     super.key,
     this.title,
+    this.error,
     required this.suggestionsBuilder,
   });
-  final Widget? title;
+  final String? title;
+  final String? error;
   final SuggestionsBuilder suggestionsBuilder;
   @override
   Widget build(BuildContext context) {
@@ -242,13 +244,20 @@ class HomeLocationWidget extends StatelessWidget {
             height: 35.0,
             child: Visibility(
               visible: title != null,
-              replacement: Text('${localizations.loading.capitalize()}...'),
+              replacement: Visibility(
+                visible: error != null,
+                replacement: Text('${localizations.loading.capitalize()}...'),
+                child: Text(
+                  style: const TextStyle(color: CupertinoColors.destructiveRed),
+                  localizations.loadingfailed.capitalize(),
+                ),
+              ),
               child: Builder(
                 builder: (context) {
                   return DefaultTextStyle.merge(
                     maxLines: 2,
                     style: TextStyle(color: theme.colorScheme.primary),
-                    child: title!,
+                    child: Text(title!),
                   );
                 },
               ),
@@ -498,8 +507,10 @@ class HomeBottomSheetBackground extends StatelessWidget {
 class HomeSliverBottomSheet extends StatelessWidget {
   const HomeSliverBottomSheet({
     super.key,
+    required this.controller,
     required this.slivers,
   });
+  final DraggableScrollableController? controller;
   final List<Widget> slivers;
   @override
   Widget build(BuildContext context) {
@@ -509,6 +520,7 @@ class HomeSliverBottomSheet extends StatelessWidget {
       minChildSize: 0.7,
       maxChildSize: 1.0,
       initialChildSize: 0.7,
+      controller: controller,
       snapSizes: const [0.7, 1.0],
       shouldCloseOnMinExtent: false,
       builder: (context, scrollController) {
@@ -524,14 +536,7 @@ class HomeSliverBottomSheet extends StatelessWidget {
                 child: CustomScrollView(
                   controller: scrollController,
                   key: const PageStorageKey('relay-page'),
-                  slivers: [
-                    SliverMainAxisGroup(slivers: slivers),
-                    const SliverSafeArea(
-                      sliver: SliverToBoxAdapter(
-                        child: SizedBox(height: kMinInteractiveDimension),
-                      ),
-                    ),
-                  ],
+                  slivers: slivers,
                 ),
               ),
             ),
@@ -636,7 +641,15 @@ class HomeAccountSelectedWidget extends StatelessWidget {
         style: theme.textTheme.titleMedium!.copyWith(
           color: theme.colorScheme.primary,
         ),
-        child: Text("${defaultNumberFormat.format(amount)} ${currency ?? 'F'}"),
+        child: Text.rich(TextSpan(
+          children: [
+            TextSpan(text: defaultNumberFormat.format(amount)),
+            TextSpan(
+              text: currency ?? 'f',
+              style: const TextStyle(fontSize: 10.0),
+            )
+          ],
+        )),
       ),
     );
   }
@@ -712,9 +725,11 @@ class HomeRelayNoFound extends StatelessWidget {
     super.key,
     required this.cashin,
     required this.account,
+    required this.onTry,
   });
   final bool cashin;
   final String account;
+  final VoidCallback? onTry;
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
@@ -730,14 +745,24 @@ class HomeRelayNoFound extends StatelessWidget {
           fontSize: 24.0,
           height: 1.2,
         ),
-        child: Visibility(
-          visible: cashin,
-          replacement: Text(
-            localizations.nowithdrawpoint(account).capitalize(),
-          ),
-          child: Text(
-            localizations.nodepositpoint(account).capitalize(),
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Visibility(
+              visible: cashin,
+              replacement: Text(
+                localizations.nowithdrawpoint(account).capitalize(),
+              ),
+              child: Text(
+                localizations.nodepositpoint(account).capitalize(),
+              ),
+            ),
+            TextButton(
+              onPressed: onTry,
+              style: TextButton.styleFrom(textStyle: theme.textTheme.titleMedium),
+              child: Text(localizations.clicktryagain.capitalize()),
+            ),
+          ],
         ),
       ),
     );

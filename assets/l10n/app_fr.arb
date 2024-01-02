@@ -4,6 +4,7 @@
     "ok": "ok",
     "confirm": "confirmer",
     "completed": "terminé",
+    "tracingfailed": "échec du traçage",
     "searchdepositpoints": "recherche de points de dépôt",
     "searchwithdrawalpoints": "recherche de points de retrait",
     "deposit": "dépôt {name}",
@@ -44,6 +45,10 @@
             }
         }
     },
+    "check": "vérifier",
+    "findrelaypoint": "rechercher un point relais",
+    "youcannotcarryout": "vous ne pouvez pas réaliser cette opération dans ce point relais.",
+    "youcancarryout": "vous pouvez effectuer cette opération dans ce point relais.",
     "amount": "montant",
     "edit": "modifier",
     "menu": "menu",
@@ -70,5 +75,7 @@
     "loadingfailed": "échec du chargement",
     "noservice": "aucun service disponible à cet endroit",
     "clicktryagain": "cliquez pour réessayer",
-    "tryagain": "réessayer"
+    "tryagain": "réessayer",
+    "connectionproblem": "problème de connexion, réessayez",
+    "erroroccured": "une erreur est survenue"
 }

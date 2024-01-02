@@ -99,6 +99,16 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
           children: [
             Builder(
               builder: (context) {
+                final url = RemoteConfig.policeSupport;
+                final value = Uri.decodeFull(url.path);
+                return HomeMenuSupportPoliceWidget(
+                  onTap: _launnchApp(url),
+                  phone: value,
+                );
+              },
+            ),
+            Builder(
+              builder: (context) {
                 final url = RemoteConfig.emailSupport;
                 final value = Uri.decodeFull(url.path);
                 return HomeMenuSupportEmailWidget(
@@ -110,18 +120,8 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
             Builder(
               builder: (context) {
                 final url = RemoteConfig.whatsappSupport;
-                final value = Uri.decodeFull(url.path);
+                final value = Uri.decodeFull(url.path).replaceAll('/', '');
                 return HomeMenuSupportWhatsappWidget(
-                  onTap: _launnchApp(url),
-                  phone: value,
-                );
-              },
-            ),
-            Builder(
-              builder: (context) {
-                final url = RemoteConfig.policeSupport;
-                final value = Uri.decodeFull(url.path);
-                return HomeMenuSupportPoliceWidget(
                   onTap: _launnchApp(url),
                   phone: value,
                 );

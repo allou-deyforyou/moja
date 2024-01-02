@@ -20,7 +20,7 @@ class SelectRelayEvent extends AsyncEvent<AsyncState> {
 
       final relayAccountFilters = 'WHERE ->(created WHERE out = ${account.id})';
 
-      final relayCashInFilters = 'AND ->(created ${Account.amountKey} >= ${account.amount})';
+      final relayCashInFilters = 'AND ->(created WHERE ${Account.amountKey} >= ${account.amount})';
 
       final relayCashOutFilters = 'AND ->(created WHERE out = ${Account.schema}:cash AND ${Account.amountKey} >= ${account.amount})';
 
@@ -44,6 +44,15 @@ class SelectRelayEvent extends AsyncEvent<AsyncState> {
           event: this,
         ));
       }
+
+      FirebaseConfig.firebaseAnalytics.logEvent(
+        name: 'select_relay',
+        parameters: {
+          Relay.idKey: relay?.id,
+          Account.amountKey: account.amount,
+          Account.transactionKey: account.transaction?.name,
+        }..removeWhere((key, value) => value == null),
+      );
     } catch (error) {
       emit(FailureState(
         'internal-error',

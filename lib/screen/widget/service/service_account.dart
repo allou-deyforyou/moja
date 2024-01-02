@@ -20,9 +20,13 @@ class SelectAccountEvent extends AsyncEvent<AsyncState> {
     try {
       emit(const PendingState());
 
-      final relayFilter = relay != null ? 'AND <-(created WHERE in=${relay!.id})' : '';
+      final relayFilter = 'AND <-(created WHERE in=${relay?.id})';
       final countryFilter = 'AND ->located->(${Country.schema} WHERE (${position.longitude}, ${position.latitude}) INSIDE ${Country.boundaryKey})';
-      final responses = await sql('SELECT *, ->located->${Country.schema}.* AS ${Account.countryKey} FROM ${Account.schema} WHERE cash=NONE $countryFilter $relayFilter;');
+      final countryQuery = 'SELECT *, ->located->${Country.schema}.* AS ${Account.countryKey} FROM ${Account.schema} WHERE cash=NONE $countryFilter';
+      final responses = await sql(switch (relay) {
+        Relay() => '$countryQuery $relayFilter',
+        null => countryQuery,
+      });
 
       final List response = responses.first;
       final data = List.of(response.map((data) => Account.fromMap(data)!));

@@ -114,7 +114,7 @@ class HomeAccountSubmittedButton extends StatelessWidget {
   final VoidCallback? onPressed;
   @override
   Widget build(BuildContext context) {
-    final localizations = MaterialLocalizations.of(context);
+    final localizations = context.localizations;
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -123,7 +123,32 @@ class HomeAccountSubmittedButton extends StatelessWidget {
           padding: kTabLabelPadding.copyWith(top: 26.0, bottom: 26.0),
           child: CustomSubmittedButton(
             onPressed: onPressed,
-            child: Text(localizations.searchFieldLabel.toUpperCase()),
+            child: Text(localizations.findrelaypoint.toUpperCase()),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class HomeAccountCheckButton extends StatelessWidget {
+  const HomeAccountCheckButton({
+    super.key,
+    required this.onPressed,
+  });
+  final VoidCallback? onPressed;
+  @override
+  Widget build(BuildContext context) {
+    final localizations = context.localizations;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: kTabLabelPadding.copyWith(top: 26.0, bottom: 26.0),
+          child: CustomSubmittedButton(
+            onPressed: onPressed,
+            child: Text(localizations.check.toUpperCase()),
           ),
         ),
       ],

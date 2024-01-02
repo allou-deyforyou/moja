@@ -443,7 +443,7 @@ class HomeMenuSupportPoliceWidget extends StatelessWidget {
     final localizations = context.localizations;
     return CustomListTile(
       onTap: onTap,
-      leading: const Icon(Icons.policy_rounded),
+      leading: const Icon(Icons.security),
       title: Text(localizations.police.capitalize()),
       trailing: Text(phone),
     );

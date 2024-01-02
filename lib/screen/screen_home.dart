@@ -1,5 +1,5 @@
-import 'dart:math' show Random;
-import 'dart:async' show StreamController, Timer;
+import 'dart:math';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -33,8 +33,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   /// Assets
+
   late final BuildContext _scaffoldContext;
   late final PageStorageBucket _pageStorageBucket;
+  late DraggableScrollableController _draggableScrollableController;
 
   late ValueNotifier<bool> _myLocationController;
   late AnimationController _pinAnimationController;
@@ -380,9 +382,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     } else if (state case FailureState<String>(:final data)) {
       switch (data) {
         default:
+          final localizations = context.localizations;
           showSnackBar(
             context: context,
-            text: 'Le traçage a échoué',
+            text: localizations.tracingfailed.capitalize(),
           );
       }
     }
@@ -452,7 +455,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   VoidCallback _callRelayModal(Relay item) {
     return () {
       final phone = item.contacts!.first;
-      void onCall() => launchUrl(Uri(scheme: 'tel', path: phone));
+
+      void onCall() {
+        FirebaseConfig.firebaseAnalytics.logEvent(
+          parameters: {Relay.idKey: item.id, Relay.nameKey: item.name},
+          name: 'call_relay',
+        );
+        launchUrl(Uri(scheme: 'tel', path: phone));
+      }
+
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         onCall();
       } else {
@@ -499,6 +510,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
       _routeController = AsyncController(const InitState());
       _getRoute(_currentRelay!);
+
+      _draggableScrollableController.reset();
 
       await showCustomBottomSheet(
         context: _scaffoldContext,
@@ -569,11 +582,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
     if (!mounted) return;
 
+    _draggableScrollableController = DraggableScrollableController();
+
     await showCustomBottomSheet(
       context: _scaffoldContext,
       builder: (context) {
         final cashin = _currentAccount!.transaction == Transaction.cashin;
         return HomeSliverBottomSheet(
+          controller: _draggableScrollableController,
           slivers: [
             HomeAccountAppBar(
               cashin: cashin,
@@ -621,18 +637,19 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         );
                       },
                     ),
-                  FailureState<String>(:final data, :final AsyncEvent<AsyncState> event) => switch (data) {
+                  FailureState<String>(:final data) => switch (data) {
                       'no-record' => SliverFillRemaining(
                           hasScrollBody: false,
                           child: HomeRelayNoFound(
                             account: _currentAccount!.name,
+                            onTry: _selectRelay,
                             cashin: cashin,
                           ),
                         ),
                       _ => SliverFillRemaining(
                           hasScrollBody: false,
                           child: HomeRelayError(
-                            onTry: () => _relayController.run(event),
+                            onTry: _selectRelay,
                           ),
                         ),
                     },
@@ -654,6 +671,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _mapPadding = bottom + kBottomNavigationBarHeight * 3.0;
 
     _pinVisibilityController.value = _mapPadding;
+
+    _relays = null;
 
     if (_mapController != null) {
       await Future.wait([
@@ -679,12 +698,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 builder: (context, state, child) {
                   return HomeLocationWidget(
                     suggestionsBuilder: _suggestionsBuilder,
+                    error: switch (state) {
+                      FailureState<String>(:final data) => data,
+                      _ => null,
+                    },
                     title: switch (state) {
-                      SuccessState<Place>(:final data) => Text(data.title),
-                      FailureState() => const Text(
-                          style: TextStyle(color: CupertinoColors.destructiveRed),
-                          "Echec de chargement",
-                        ),
+                      SuccessState<Place>(:final data) => data.title,
                       _ => null,
                     },
                   );

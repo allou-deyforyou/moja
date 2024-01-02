@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:listenable_tools/listenable_tools.dart';
@@ -44,20 +45,33 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
   late final AsyncController<AsyncState> _relayController;
 
   void _listenRelayState(BuildContext context, AsyncState state) async {
+    final localizations = context.localizations;
     if (state case SuccessState<List<Relay>>()) {
       showSnackBar(
         context: context,
-        text: 'Vous pouvez retirer ici',
+        backgroundColor: CupertinoColors.activeGreen,
+        text: localizations.youcancarryout.capitalize(),
       );
     } else if (state case FailureState<String>(:final data)) {
       switch (data) {
         case 'no-record':
           showSnackBar(
             context: context,
-            text: 'Vous ne pouvez pas retirer ici',
+            backgroundColor: CupertinoColors.destructiveRed,
+            text: localizations.youcannotcarryout.capitalize(),
+          );
+          break;
+        case 'no-internet':
+          showSnackBar(
+            context: context,
+            text: localizations.connectionproblem.capitalize(),
           );
           break;
         default:
+          showSnackBar(
+            context: context,
+            text: localizations.erroroccured.capitalize(),
+          );
       }
     }
   }
@@ -114,8 +128,14 @@ class _HomeAccountScreenState extends State<HomeAccountScreen> {
               builder: (context, state, child) {
                 VoidCallback? onPressed = _onSubmitted;
                 if (state is PendingState) onPressed = null;
-                return HomeAccountSubmittedButton(
-                  onPressed: onPressed,
+                return Visibility(
+                  visible: _currentRelay != null,
+                  replacement: HomeAccountSubmittedButton(
+                    onPressed: onPressed,
+                  ),
+                  child: HomeAccountCheckButton(
+                    onPressed: onPressed,
+                  ),
                 );
               },
             ),
