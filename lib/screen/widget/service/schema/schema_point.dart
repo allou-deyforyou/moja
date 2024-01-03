@@ -57,14 +57,14 @@ class Point extends Equatable {
 
   Map<String, dynamic> toMap() {
     return {
-      typeKey: type,
+      typeKey: type ?? 'Point',
       coordinatesKey: coordinates,
     }..removeWhere((key, value) => value == null);
   }
 
   Map<String, dynamic> toSurreal() {
     return {
-      typeKey: type?.json(),
+      typeKey: type?.json() ?? '"Point"',
       coordinatesKey: coordinates,
     }..removeWhere((key, value) => value == null);
   }

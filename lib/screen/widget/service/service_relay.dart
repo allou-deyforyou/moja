@@ -1,43 +1,53 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:listenable_tools/listenable_tools.dart';
 
 import '_service.dart';
 
 class SelectRelayEvent extends AsyncEvent<AsyncState> {
   const SelectRelayEvent({
-    required this.account,
+    this.location,
+    this.account,
     this.relay,
   });
-  final Account account;
+
+  final Account? account;
+  final Point? location;
   final Relay? relay;
+
   @override
   Future<void> handle(AsyncEmitter<AsyncState> emit) async {
     try {
       emit(const PendingState());
 
-      final relayFilter = 'AND ${Relay.idKey} = ${relay?.id}';
+      final relayAccountFilters = '->(created WHERE out = ${account?.id})';
 
-      final relayAccountFilters = 'WHERE ->(created WHERE out = ${account.id})';
+      final relayCashInFilters = '->(created WHERE ${Account.amountKey} >= ${account?.amount})';
 
-      final relayCashInFilters = 'AND ->(created WHERE ${Account.amountKey} >= ${account.amount})';
+      final relayCashOutFilters = '->(created WHERE out = ${Account.schema}:cash AND ${Account.amountKey} >= ${account?.amount})';
 
-      final relayCashOutFilters = 'AND ->(created WHERE out = ${Account.schema}:cash AND ${Account.amountKey} >= ${account.amount})';
+      final relayIdFilter = '${Relay.idKey} = ${relay?.id}';
 
-      final selectRelay = 'SELECT * FROM ${Relay.schema} $relayAccountFilters';
+      final polygon = await compute((coordinates) => Polygon.fromRadius(coordinates, 1500, sides: 360), location?.coordinates);
+      final relayLocationFilter = '${Relay.locationKey}.${Place.positionKey} IN ${polygon?.toSurreal()}';
 
-      final responses = await sql(switch (account.transaction!) {
-        Transaction.cashout when relay != null => '$selectRelay $relayCashOutFilters $relayFilter PARALLEL',
-        Transaction.cashin when relay != null => '$selectRelay $relayCashInFilters $relayFilter PARALLEL',
-        Transaction.cashout => '$selectRelay $relayCashOutFilters PARALLEL',
-        Transaction.cashin => '$selectRelay $relayCashInFilters PARALLEL',
+      const selectRelay = 'SELECT * FROM ${Relay.schema}';
+
+      final responses = await sql(switch (account?.transaction) {
+        Transaction.cashout when relay != null => '$selectRelay WHERE $relayAccountFilters AND $relayCashOutFilters AND $relayIdFilter PARALLEL',
+        Transaction.cashin when relay != null => '$selectRelay WHERE $relayAccountFilters AND $relayCashInFilters AND $relayIdFilter PARALLEL',
+        Transaction.cashout when location != null => '$selectRelay WHERE $relayAccountFilters AND $relayLocationFilter AND $relayCashOutFilters PARALLEL',
+        Transaction.cashin when location != null => '$selectRelay WHERE $relayAccountFilters AND $relayLocationFilter AND $relayCashInFilters PARALLEL',
+        _ when location != null => '$selectRelay WHERE $relayLocationFilter',
+        _ => throw 'No Handle',
       });
 
       final List response = responses.first;
       final data = List.of(response.map((data) => Relay.fromMap(data)!));
 
       if (data.isNotEmpty) {
-        emit(SuccessState(data));
+        emit(SuccessState(data, event: this));
       } else {
         emit(FailureState(
           'no-record',
@@ -49,8 +59,9 @@ class SelectRelayEvent extends AsyncEvent<AsyncState> {
         name: 'select_relay',
         parameters: {
           Relay.idKey: relay?.id,
-          Account.amountKey: account.amount,
-          Account.transactionKey: account.transaction?.name,
+          Account.amountKey: account?.amount,
+          Relay.locationKey: location?.toMap().toString(),
+          Account.transactionKey: account?.transaction?.name,
         }..removeWhere((key, value) => value == null),
       );
     } catch (error) {

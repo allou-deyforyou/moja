@@ -8,6 +8,34 @@ import 'package:listenable_tools/listenable_tools.dart';
 
 import '_service.dart';
 
+Future<LatLngBounds?> createLatLngBoundsFromList(List<List<double>> rawPositions) async {
+  return compute((rawPositions) {
+    final positions = List.of(rawPositions.map((item) => LatLng(item[1], item[0])));
+    return _createLatLngBoundsFromList(positions);
+  }, rawPositions);
+}
+
+LatLngBounds? _createLatLngBoundsFromList(List<LatLng> positions) {
+  if (positions.isEmpty) return null;
+
+  double minLat = positions[0].latitude;
+  double maxLat = positions[0].latitude;
+  double minLng = positions[0].longitude;
+  double maxLng = positions[0].longitude;
+
+  for (LatLng position in positions) {
+    minLat = min(minLat, position.latitude);
+    maxLat = max(maxLat, position.latitude);
+    minLng = min(minLng, position.longitude);
+    maxLng = max(maxLng, position.longitude);
+  }
+
+  LatLng southwest = LatLng(minLat, minLng);
+  LatLng northeast = LatLng(maxLat, maxLng);
+
+  return LatLngBounds(southwest: southwest, northeast: northeast);
+}
+
 class GetRouteEvent extends AsyncEvent<AsyncState> {
   const GetRouteEvent({
     required this.source,

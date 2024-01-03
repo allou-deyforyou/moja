@@ -137,7 +137,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       );
       if (data != null) {
         _currentAccount = data;
-        _selectRelay();
+        _selectAccountRelay(
+          account: _currentAccount!,
+          location: Point(coordinates: [
+            _centerPosition!.longitude,
+            _centerPosition!.latitude,
+          ]),
+        );
         _openAccountListView();
       }
     };
@@ -150,7 +156,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
     if (data != null) {
       _currentAccount = data;
-      _selectRelay();
+      _selectAccountRelay(
+        account: _currentAccount!,
+        location: Point(coordinates: [
+          _centerPosition!.longitude,
+          _centerPosition!.latitude,
+        ]),
+      );
       _openAccountListView();
     }
   }
@@ -219,6 +231,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       _centerPosition = _mapController!.cameraPosition!.target;
 
       _searchPlace(_centerPosition!);
+
+      _selectRelay(
+        location: Point(coordinates: [
+          _centerPosition!.longitude,
+          _centerPosition!.latitude,
+        ]),
+      );
     }
   }
 
@@ -249,6 +268,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
+  void _goToBounds(LatLngBounds bounds) {
+    if (_mapController == null) return;
+
+    final mediaQuery = context.mediaQuery;
+    final height = mediaQuery.size.height * 0.7;
+    final paddingBottom = mediaQuery.padding.bottom;
+    final top = paddingBottom + kBottomNavigationBarHeight;
+    final bottom = height + kBottomNavigationBarHeight;
+
+    _mapController!.animateCamera(
+      CameraUpdate.newLatLngBounds(
+        bounds,
+        bottom: bottom,
+        right: 24.0,
+        left: 24.0,
+        top: top,
+      ),
+    );
+  }
+
   void _goToPosition(LatLng position) {
     if (_mapController == null) return;
 
@@ -269,11 +308,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _myLocationController.value = true;
 
     _bearing = location.bearing ?? 0.0;
-    _centerPosition = location.position;
 
-    _goToPosition(_centerPosition!);
+    _goToPosition(location.position);
 
-    _searchPlace(_centerPosition!);
+    if (_pinVisibilityController.value != null) {
+      _centerPosition = location.position;
+
+      _selectRelay(
+        location: Point(coordinates: [
+          _centerPosition!.longitude,
+          _centerPosition!.latitude,
+        ]),
+      );
+      _searchPlace(
+        _centerPosition!,
+      );
+    }
   }
 
   Future<void> _addRelayMaplibre(List<Relay> relays) async {
@@ -308,8 +358,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final options = LineOptions(
       lineColor: "#ff0000",
       lineJoin: 'round',
-      lineWidth: 4.0,
       geometry: route,
+      lineWidth: 4.0,
     );
 
     final line = _mapController!.lines.firstOrNull;
@@ -339,22 +389,50 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   /// RelayService
+  late final AsyncController<AsyncState> _accountRelayController;
   late final AsyncController<AsyncState> _relayController;
   List<Relay>? _relays;
   Relay? _currentRelay;
 
   void _listenRelayState(BuildContext context, AsyncState state) async {
-    if (state case SuccessState<List<Relay>>(:final data)) {
+    if (state case SuccessState<List<Relay>>(:final data, :final SelectRelayEvent event)) {
       _addRelayMaplibre(data);
       _relays = List.from(data);
       _bannerAdIndex = Random().nextInt(_relays!.length);
       _relays!.insert(_bannerAdIndex, _relays![_bannerAdIndex]);
+
+      if (event.account == null) return;
+
+      final positions = List.of(_relays!.map((item) => item.location!.position!.coordinates!));
+      positions.add(event.location!.coordinates!);
+      final bounds = await createLatLngBoundsFromList(positions);
+      if (bounds != null) _goToBounds(bounds);
+    } else if (state case FailureState<String>(:final data)) {
+      switch (data) {
+        case 'no-record':
+          _relays = null;
+          await _clearMap();
+          break;
+        default:
+      }
     }
   }
 
-  Future<void> _selectRelay() {
+  Future<void> _selectAccountRelay({
+    Account? account,
+    Point? location,
+  }) {
+    return _accountRelayController.run(SelectRelayEvent(
+      location: location,
+      account: account,
+    ));
+  }
+
+  Future<void> _selectRelay({
+    Point? location,
+  }) {
     return _relayController.run(SelectRelayEvent(
-      account: _currentAccount!,
+      location: location,
     ));
   }
 
@@ -438,6 +516,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
     /// RelayService
     _relayController = AsyncController(const InitState());
+    _accountRelayController = AsyncController(const InitState());
   }
 
   @override
@@ -565,12 +644,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _mapPadding = mediaQuery.size.height * 0.5;
 
     _route = null;
+    _relays = null;
     _currentRelay = null;
 
     _routeTruncateController?.close();
     _routeTruncateController = null;
 
     _pinVisibilityController.value = null;
+    _myLocationController.value = false;
 
     if (_mapController != null) {
       await Future.wait([
@@ -605,7 +686,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ControllerBuilder(
               autoListen: true,
               listener: _listenRelayState,
-              controller: _relayController,
+              controller: _accountRelayController,
               builder: (context, state, child) {
                 return switch (state) {
                   PendingState() => const SliverFillRemaining(
@@ -637,19 +718,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         );
                       },
                     ),
-                  FailureState<String>(:final data) => switch (data) {
+                  FailureState<String>(:final data, :final SelectRelayEvent event) => switch (data) {
                       'no-record' => SliverFillRemaining(
                           hasScrollBody: false,
                           child: HomeRelayNoFound(
                             account: _currentAccount!.name,
-                            onTry: _selectRelay,
+                            onTry: () {
+                              _relayController.run(event);
+                            },
                             cashin: cashin,
                           ),
                         ),
                       _ => SliverFillRemaining(
                           hasScrollBody: false,
                           child: HomeRelayError(
-                            onTry: _selectRelay,
+                            onTry: () {
+                              _relayController.run(event);
+                            },
                           ),
                         ),
                     },
@@ -692,22 +777,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ControllerBuilder(
-                listener: _listenPlaceState,
-                controller: _placeController,
-                builder: (context, state, child) {
-                  return HomeLocationWidget(
-                    suggestionsBuilder: _suggestionsBuilder,
-                    error: switch (state) {
-                      FailureState<String>(:final data) => data,
-                      _ => null,
-                    },
-                    title: switch (state) {
-                      SuccessState<Place>(:final data) => data.title,
-                      _ => null,
-                    },
-                  );
-                },
+              ControllerListener(
+                autoListen: true,
+                listener: _listenRelayState,
+                controller: _relayController,
+                child: ControllerBuilder(
+                  listener: _listenPlaceState,
+                  controller: _placeController,
+                  builder: (context, state, child) {
+                    return HomeLocationWidget(
+                      suggestionsBuilder: _suggestionsBuilder,
+                      error: switch (state) {
+                        FailureState<String>(:final data) => data,
+                        _ => null,
+                      },
+                      title: switch (state) {
+                        SuccessState<Place>(:final data) => data.title,
+                        _ => null,
+                      },
+                    );
+                  },
+                ),
               ),
               const Padding(padding: kMaterialListPadding),
               const Divider(),

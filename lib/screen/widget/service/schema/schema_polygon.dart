@@ -11,7 +11,7 @@ class Polygon extends Equatable {
     this.coordinates,
   });
 
-  factory Polygon.decode(String str, {int precision = 5}) {
+  static Polygon decode(String str, {int precision = 5}) {
     var index = 0;
     var lat = 0.0;
     var lng = 0.0;
@@ -57,17 +57,19 @@ class Polygon extends Equatable {
     return Polygon(coordinates: coordinates);
   }
 
-  factory Polygon.fromRadius(List<double> center, double radius, {int sides = 360}) {
+  static Polygon? fromRadius(List<double>? center, double radius, {int sides = 360}) {
+    if (center == null || center.length != 2) return null;
+
+    final longitude = center[0];
+    final latitude = center[1];
+
     List<List<double>> coordinates = [];
 
-    final latitude = center[1];
-    final longitude = center[0];
-
-    for (int i = 0; i < sides; i++) {
+    for (int i = 0; i <= sides; i++) {
       double theta = (2 * pi * i) / sides;
 
-      double x = latitude + radius / 111111 * cos(theta);
-      double y = longitude + radius / (111111 * cos(latitude)) * sin(theta);
+      double x = latitude + (radius / 111111) * cos(theta);
+      double y = longitude + (radius / (111111 * cos(latitude))) * sin(theta);
 
       coordinates.add([y, x]);
     }
@@ -122,15 +124,15 @@ class Polygon extends Equatable {
 
   Map<String, dynamic> toMap() {
     return {
-      typeKey: type,
+      typeKey: type ?? "Polygon",
       coordinatesKey: coordinates,
     }..removeWhere((key, value) => value == null);
   }
 
   Map<String, dynamic> toSurreal() {
     return {
-      typeKey: type?.json(),
-      coordinatesKey: coordinates,
+      coordinatesKey: '[$coordinates]',
+      typeKey: type?.json() ?? '"Polygon"',
     }..removeWhere((key, value) => value == null);
   }
 
