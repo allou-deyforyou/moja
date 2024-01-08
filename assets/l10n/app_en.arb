@@ -1,4 +1,6 @@
 {
+    "onboarding_title": "",
+    "onboarding_body": "",
     "getstarted": "get started",
     "next": "next",
     "ok": "ok",
@@ -71,6 +73,7 @@
     "cancel": "cancel",
     "searchpoint": "search point",
     "loading": "loading",
+    "youcallrelay": "you are about to call",
     "call": "call",
     "loadingfailed": "loading failed",
     "noservice": "no service available at this location",

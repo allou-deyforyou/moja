@@ -186,11 +186,12 @@ class _ProfileLocationMapState extends State<ProfileLocationMap> {
             onMapCreated: widget.onMapCreated,
             onMapLongClick: widget.onMapLongClick,
             myLocationEnabled: widget.myLocationEnabled,
+            onUserLocationUpdated: widget.onUserLocationUpdated,
             myLocationRenderMode: switch (defaultTargetPlatform) {
               TargetPlatform.iOS => MyLocationRenderMode.COMPASS,
               _ => MyLocationRenderMode.GPS,
             },
-            onUserLocationUpdated: widget.onUserLocationUpdated,
+            myLocationTrackingMode: MyLocationTrackingMode.TrackingGPS,
             onStyleLoadedCallback: widget.onStyleLoadedCallback ?? () {},
             initialCameraPosition: switch (widget.center) {
               null => const CameraPosition(target: LatLng(0.0, 0.0)),
@@ -268,7 +269,7 @@ class HomeLocationWidget extends StatelessWidget {
       },
     );
     return Visibility(
-      visible: title != null,
+      visible: title != null || error != null,
       replacement: Shimmer.fromColors(
         baseColor: theme.colorScheme.onSurfaceVariant,
         highlightColor: theme.colorScheme.onInverseSurface,
@@ -644,10 +645,13 @@ class HomeAccountSelectedWidget extends StatelessWidget {
         child: Text.rich(TextSpan(
           children: [
             TextSpan(text: defaultNumberFormat.format(amount)),
-            TextSpan(
-              text: currency ?? 'f',
-              style: const TextStyle(fontSize: 10.0),
-            )
+            WidgetSpan(
+              alignment: PlaceholderAlignment.top,
+              child: Text(
+                currency ?? 'f',
+                style: const TextStyle(fontSize: 10.0),
+              ),
+            ),
           ],
         )),
       ),
@@ -883,17 +887,10 @@ class HomeRelayCallModal extends StatelessWidget {
     final theme = context.theme;
     final localizations = context.localizations;
     return CupertinoActionSheet(
-      // title: DefaultTextStyle.merge(
-      //   style: theme.textTheme.titleSmall!.copyWith(
-      //     fontWeight: FontWeight.w600,
-      //     height: 1.2,
-      //   ),
-      //   child: Text(relay),
-      // ),
       message: DefaultTextStyle.merge(
         style: theme.textTheme.titleMedium!.copyWith(height: 1.2),
         child: Text.rich(TextSpan(children: [
-          const TextSpan(text: "Vous êtes sur le point d'appeler chez\n"),
+          TextSpan(text: "${localizations.youcallrelay.capitalize()}\n"),
           TextSpan(
             style: const TextStyle(fontWeight: FontWeight.bold),
             text: relay,

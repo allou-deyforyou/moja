@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:widget_tools/widget_tools.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '_widget.dart';

@@ -15,20 +15,27 @@ Future<LatLngBounds?> createLatLngBoundsFromList(List<List<double>> rawPositions
   }, rawPositions);
 }
 
-LatLngBounds? _createLatLngBoundsFromList(List<LatLng> positions) {
+LatLngBounds? _createLatLngBoundsFromList(List<LatLng> positions, {double margin = 0.001}) {
   if (positions.isEmpty) return null;
 
-  double minLat = positions[0].latitude;
-  double maxLat = positions[0].latitude;
-  double minLng = positions[0].longitude;
-  double maxLng = positions[0].longitude;
+  double minLat = double.infinity;
+  double maxLat = -double.infinity;
+  double minLng = double.infinity;
+  double maxLng = -double.infinity;
 
-  for (LatLng position in positions) {
-    minLat = min(minLat, position.latitude);
-    maxLat = max(maxLat, position.latitude);
-    minLng = min(minLng, position.longitude);
-    maxLng = max(maxLng, position.longitude);
+  // Parcourez la liste de LatLng pour trouver les limites
+  for (LatLng latLng in positions) {
+    minLat = min(minLat, latLng.latitude);
+    maxLat = max(maxLat, latLng.latitude);
+    minLng = min(minLng, latLng.longitude);
+    maxLng = max(maxLng, latLng.longitude);
   }
+
+  // Ajoutez une marge autour des limites
+  minLat -= margin;
+  maxLat += margin;
+  minLng -= margin;
+  maxLng += margin;
 
   LatLng southwest = LatLng(minLat, minLng);
   LatLng northeast = LatLng(maxLat, maxLng);

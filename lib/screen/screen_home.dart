@@ -1,10 +1,10 @@
 import 'dart:math';
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maplibre_gl/mapbox_gl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -167,6 +167,28 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
   }
 
+  /// Permission
+  late final AsyncController<AsyncState> _permissionController;
+
+  void _listenPermissionState(BuildContext context, AsyncState state) async {
+    if (state case SuccessState<Permission>(:final data) when data == Permission.notification) {
+      NotificationConfig.enableNotifications();
+    } else if (state case FailureState<String>(:final data)) {
+      switch (data) {
+        case 'no-permission':
+          HiveLocalDB.notifications = false;
+          break;
+        default:
+      }
+    }
+  }
+
+  Future<void> _requestPermission(Permission permission) {
+    return _permissionController.run(RequestPermissionEvent(
+      permission: permission,
+    ));
+  }
+
   /// MapLibre
   MaplibreMapController? _mapController;
   UserLocation? _userLocation;
@@ -194,7 +216,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
   }
 
-  Future<void> _updateContentInsets() {
+  Future<void> _updateContentInsets() async {
+    if (_mapController == null) return;
     return _mapController!.updateContentInsets(EdgeInsets.only(
       bottom: _mapPadding,
       right: 16.0,
@@ -221,7 +244,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     if (_pinVisibilityController.value != null) {
       _startPin();
     }
-
     _myLocationController.value = false;
   }
 
@@ -241,30 +263,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
   }
 
-  void _onUserLocationUpdated(UserLocation location) {
-    if (_userLocation == null) {
-      _goToMyPosition(location);
-    } else if (_myLocationController.value) {
-      _goToPosition(location.position);
-    }
-
-    _userLocation = location;
-    _routeTruncateController?.add(_userLocation!.position);
-  }
-
   Future<void> _setZoom(double zoom) async {
-    if (_mapController == null) return;
-    _zoom = zoom;
-    await _mapController!.animateCamera(
-      CameraUpdate.zoomTo(zoom),
+    await _mapController?.animateCamera(
+      CameraUpdate.zoomTo(_zoom = zoom),
     );
   }
 
   Future<void> _setTitl(double tilt) async {
-    if (_mapController == null) return;
-    _tilt = tilt;
-    await _mapController!.animateCamera(
-      CameraUpdate.tiltTo(tilt),
+    await _mapController?.animateCamera(
+      CameraUpdate.tiltTo(_tilt = tilt),
     );
   }
 
@@ -272,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     if (_mapController == null) return;
 
     final mediaQuery = context.mediaQuery;
-    final height = mediaQuery.size.height * 0.7;
+    final height = mediaQuery.size.height * 0.75;
     final paddingBottom = mediaQuery.padding.bottom;
     final top = paddingBottom + kBottomNavigationBarHeight;
     final bottom = height + kBottomNavigationBarHeight;
@@ -286,6 +293,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         top: top,
       ),
     );
+  }
+
+  void _onUserLocationUpdated(UserLocation location) {
+    if (_userLocation == null || (_myLocationController.value && _pinVisibilityController.value == null)) {
+      _goToMyPosition(location);
+    } else if (_myLocationController.value) {
+      _goToPosition(location.position);
+    }
+
+    _userLocation = location;
+    _routeTruncateController?.add(_userLocation!.position);
   }
 
   void _goToPosition(LatLng position) {
@@ -307,7 +325,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
     _myLocationController.value = true;
 
-    _bearing = location.bearing ?? 0.0;
+    _bearing = location.heading?.trueHeading;
+
+    await _updateContentInsets();
 
     _goToPosition(location.position);
 
@@ -505,6 +525,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
     _bannerAdLoaded = ValueNotifier(false);
     _loadBannerAd();
+
+    /// PermissionService
+    _permissionController = AsyncController(const InitState());
+    if (HiveLocalDB.notifications == null) {
+      _requestPermission(Permission.notification);
+    }
 
     /// MapLibre
     _mapPadding = 0.0;
@@ -718,26 +744,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         );
                       },
                     ),
-                  FailureState<String>(:final data, :final SelectRelayEvent event) => switch (data) {
-                      'no-record' => SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: HomeRelayNoFound(
-                            account: _currentAccount!.name,
-                            onTry: () {
-                              _relayController.run(event);
-                            },
-                            cashin: cashin,
-                          ),
-                        ),
-                      _ => SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: HomeRelayError(
-                            onTry: () {
-                              _relayController.run(event);
-                            },
-                          ),
-                        ),
-                    },
+                  FailureState<String>(:final data, :final SelectRelayEvent event) => Builder(
+                      builder: (context) {
+                        void onTryAgain() => _accountRelayController.run(event);
+                        return switch (data) {
+                          'no-record' => SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: HomeRelayNoFound(
+                                account: _currentAccount!.name,
+                                onTry: onTryAgain,
+                                cashin: cashin,
+                              ),
+                            ),
+                          _ => SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: HomeRelayError(
+                                onTry: onTryAgain,
+                              ),
+                            ),
+                        };
+                      },
+                    ),
                   _ => const SliverToBoxAdapter(),
                 };
               },
@@ -854,61 +881,65 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    return PageStorage(
-      bucket: _pageStorageBucket,
-      child: Scaffold(
-        extendBodyBehindAppBar: true,
-        resizeToAvoidBottomInset: false,
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerTop,
-        floatingActionButton: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            HomeMenuButton(
-              onPressed: _openMenuScreen,
-            ),
-            ValueListenableBuilder(
-              valueListenable: _myLocationController,
-              builder: (context, active, child) {
-                return HomeLocationButton(
-                  onPressed: _goToMyPosition,
-                  active: active,
-                );
-              },
-            ),
-          ],
-        ),
-        body: AfterLayout(
-          afterLayout: _afterLayout,
-          child: Stack(
-            fit: StackFit.expand,
+    return ControllerListener(
+      listener: _listenPermissionState,
+      controller: _permissionController,
+      child: PageStorage(
+        bucket: _pageStorageBucket,
+        child: Scaffold(
+          extendBodyBehindAppBar: true,
+          resizeToAvoidBottomInset: false,
+          floatingActionButtonLocation: FloatingActionButtonLocation.centerTop,
+          floatingActionButton: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              ProfileLocationMap(
-                onMapIdle: _onMapIdle,
-                onMapMoved: _onMapMoved,
-                onMapCreated: _onMapCreated,
-                onStyleLoadedCallback: _onStyleLoadedCallback,
-                onUserLocationUpdated: _onUserLocationUpdated,
+              HomeMenuButton(
+                onPressed: _openMenuScreen,
               ),
-              ValueListenableBuilder<double?>(
-                valueListenable: _pinVisibilityController,
-                builder: (context, padding, child) {
-                  return Visibility(
-                    key: ValueKey(padding),
-                    visible: padding != null,
-                    child: Builder(
-                      builder: (context) {
-                        return Positioned.fill(
-                          bottom: padding,
-                          child: ProfileLocationPin(
-                            controller: _pinAnimationController,
-                          ),
-                        );
-                      },
-                    ),
+              ValueListenableBuilder(
+                valueListenable: _myLocationController,
+                builder: (context, active, child) {
+                  return HomeLocationButton(
+                    onPressed: _goToMyPosition,
+                    active: active,
                   );
                 },
               ),
             ],
+          ),
+          body: AfterLayout(
+            afterLayout: _afterLayout,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ProfileLocationMap(
+                  onMapIdle: _onMapIdle,
+                  onMapMoved: _onMapMoved,
+                  onMapCreated: _onMapCreated,
+                  onStyleLoadedCallback: _onStyleLoadedCallback,
+                  onUserLocationUpdated: _onUserLocationUpdated,
+                ),
+                ValueListenableBuilder<double?>(
+                  valueListenable: _pinVisibilityController,
+                  builder: (context, padding, child) {
+                    return Visibility(
+                      key: ValueKey(padding),
+                      visible: padding != null,
+                      child: Builder(
+                        builder: (context) {
+                          return Positioned.fill(
+                            bottom: padding,
+                            child: ProfileLocationPin(
+                              controller: _pinAnimationController,
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
